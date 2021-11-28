@@ -1,6 +1,7 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
+#include <QPair>
 #include <QRect>
 #include <QWidget>
 QT_BEGIN_NAMESPACE
@@ -16,6 +17,7 @@ public:
     ~Widget();
 
     bool isOnPixmap(const QPoint& curPos);
+    bool isInPixelRange(int pixels);
     void scalePixmap(qreal scale, const QPoint& center); //缩放中心
 
 private:
@@ -26,6 +28,7 @@ private:
     QPixmap pixmap;
     QPixmap toShow;
     qreal scaleSize = 1.0;
+    QPair<int, int> pixelRange { (int)1e3, (int)1e8 };
 
     // QWidget interface
 protected:

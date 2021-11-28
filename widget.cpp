@@ -28,11 +28,16 @@ bool Widget::isOnPixmap(const QPoint& curPos)
     return pixRect.contains(curPos);
 }
 
+bool Widget::isInPixelRange(int pixels)
+{
+    return pixels >= pixelRange.first && pixels <= pixelRange.second;
+}
+
 void Widget::scalePixmap(qreal scale, const QPoint& center)
 {
     QSize newSize = pixmap.size() * scale;
     int pixels = newSize.width() * newSize.height();
-    if (pixels >= 1e3 && pixels <= 1e8) { //超出像素范围，使用长宽不太准确
+    if (isInPixelRange(pixels)) { //限制像素范围，使用长宽不太准确
         QPoint oldCurPos = center - pixRect.topLeft(); //relative
         QPoint newCurPos = oldCurPos * (scale / scaleSize);
         toShow = pixmap.scaled(newSize);
