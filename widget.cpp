@@ -15,6 +15,7 @@ Widget::Widget(QWidget *parent)
     showFullScreen();
     toShow = pixmap = QPixmap("E:\\Qt5.14.2\\Projects\\ImageViewer_2\\default.png"); //"E:\\图片(New)\\Mirror.png"    //"E:\\Qt5.14.2\\Projects\\ImageViewer_2\\default.png"
     pixRect.setSize(pixmap.size());
+    pixRect.moveCenter(this->rect().center());
 }
 
 Widget::~Widget()
@@ -25,6 +26,21 @@ Widget::~Widget()
 bool Widget::isOnPixmap(const QPoint& curPos)
 {
     return pixRect.contains(curPos);
+}
+
+void Widget::scalePixmap(qreal scale, const QPoint& center)
+{
+    QSize newSize = pixmap.size() * scale;
+    int pixels = newSize.width() * newSize.height();
+    if (pixels >= 1e3 && pixels <= 1e8) { //超出像素范围，使用长宽不太准确
+        QPoint oldCurPos = center - pixRect.topLeft(); //relative
+        QPoint newCurPos = oldCurPos * (scale / scaleSize);
+        toShow = pixmap.scaled(newSize);
+        pixRect.translate(oldCurPos - newCurPos);
+        pixRect.setSize(newSize);
+        scaleSize = scale;
+        update();
+    }
 }
 
 void Widget::paintEvent(QPaintEvent* event)
@@ -38,6 +54,7 @@ void Widget::paintEvent(QPaintEvent* event)
     painter.setPen(pen);
     painter.drawRect(pixRect);
     painter.drawPixmap(pixRect.topLeft(), toShow);
+    painter.drawText(0, 10, QString("%1 * %2 = %3").arg(pixRect.width()).arg(pixRect.height()).arg(pixRect.width() * pixRect.height()));
 }
 
 void Widget::mousePressEvent(QMouseEvent* event)
@@ -62,15 +79,19 @@ void Widget::mouseMoveEvent(QMouseEvent* event)
     update();
 }
 
+void Widget::keyReleaseEvent(QKeyEvent* event)
+{
+    switch (event->key()) {
+    case Qt::Key_Space:
+        scalePixmap(1.0, this->rect().center());
+        break;
+    default:
+        break;
+    }
+}
+
 void Widget::wheelEvent(QWheelEvent* event)
 {
-    qreal oldScaleSize = scaleSize;
-    scaleSize += event->delta() > 0 ? 0.1 : -0.1;
-    QSize newSize = pixmap.size() * scaleSize;
-    QPoint oldCurPos = event->pos() - pixRect.topLeft(); //relative
-    QPoint newCurPos = oldCurPos * (scaleSize / oldScaleSize);
-    toShow = pixmap.scaled(newSize);
-    pixRect.translate(oldCurPos - newCurPos);
-    pixRect.setSize(newSize);
-    update();
+    qreal scale = event->delta() > 0 ? scaleSize * 1.1 : scaleSize / 1.1; //观察微软原生Photo得出结论
+    scalePixmap(scale, event->pos());
 }

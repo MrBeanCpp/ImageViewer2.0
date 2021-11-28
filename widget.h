@@ -16,14 +16,13 @@ public:
     ~Widget();
 
     bool isOnPixmap(const QPoint& curPos);
+    void scalePixmap(qreal scale, const QPoint& center); //缩放中心
 
 private:
     Ui::Widget* ui;
 
-    //QPoint pixPos { 0, 0 };
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;
-    //QSize pixSize;
     QPixmap pixmap;
     QPixmap toShow;
     qreal scaleSize = 1.0;
@@ -37,6 +36,7 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
+    void keyReleaseEvent(QKeyEvent* event) override;
 
     // QWidget interface
 protected:
