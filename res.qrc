@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/pin_off.ico</file>
+        <file>images/pin_on.ico</file>
+    </qresource>
+</RCC>

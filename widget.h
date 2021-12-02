@@ -1,9 +1,11 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
+#include <QAbstractButton>
 #include <QPair>
 #include <QRect>
 #include <QWidget>
+#include <windows.h>
 QT_BEGIN_NAMESPACE
 namespace Ui { class Widget; }
 QT_END_NAMESPACE
@@ -19,12 +21,17 @@ public:
     bool isOnPixmap(const QPoint& curPos);
     bool isInPixelRange(int pixels);
     void scalePixmap(qreal scale, const QPoint& center); //缩放中心
+    void updateInfo(void);
+    void setShadowEffect(QWidget* widget, const QPoint& offset, const QColor& color, int radius);
+    void adjustBtnPos(void);
+    void setIcon(QAbstractButton* btn, const QString& iconName, const QString& suffix = ".ico", const QString& dir = "images"); //default for inner resource
 
 private:
     Ui::Widget* ui;
 
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;
+    bool canMovePix = false;
     QPixmap pixmap;
     QPixmap toShow;
     qreal scaleSize = 1.0;
@@ -44,5 +51,10 @@ protected:
     // QWidget interface
 protected:
     void wheelEvent(QWheelEvent* event) override;
+
+    // QWidget interface
+protected:
+    void focusInEvent(QFocusEvent* event) override;
+    void focusOutEvent(QFocusEvent* event) override;
 };
 #endif // WIDGET_H
