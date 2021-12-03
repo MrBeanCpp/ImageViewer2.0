@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>707</width>
-    <height>378</height>
+    <width>685</width>
+    <height>350</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -97,7 +97,7 @@
 	color: rgb(50, 50, 50);
 }
 QPushButton:hover{
-	background-color:rgba(80,80,80,150);
+	background-color:rgba(180,180,180,200);
 }
 QPushButton:pressed{
 	background-color:rgba(150,150,150,100);
@@ -144,7 +144,7 @@ QPushButton:pressed{
        <string/>
       </property>
       <property name="icon">
-       <iconset resource="../ImageViewer/res.qrc">
+       <iconset resource="res.qrc">
         <normaloff>:/images/pin_off.ico</normaloff>:/images/pin_off.ico</iconset>
       </property>
       <property name="checkable">
@@ -169,7 +169,7 @@ QPushButton:pressed{
   </widget>
  </widget>
  <resources>
-  <include location="../ImageViewer/res.qrc"/>
+  <include location="res.qrc"/>
  </resources>
  <connections/>
 </ui>

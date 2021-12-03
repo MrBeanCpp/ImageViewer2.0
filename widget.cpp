@@ -1,7 +1,6 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include <QDebug>
-#include <QGraphicsDropShadowEffect>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScreen>
@@ -29,7 +28,9 @@ Widget::Widget(QWidget *parent)
         setIcon(ui->btn_pin, checked ? "pin_on" : "pin_off");
     });
 
-    toShow = pixmap = QPixmap(R"(E:\Qt5.14.2\Projects\ImageViewer_2\default.png)"); //"E:\图片(New)\Mirror.png"    //"E:\\Qt5.14.2\\Projects\\ImageViewer_2\\default.png"
+    pixmap = QPixmap(R"(E:\Qt5.14.2\Projects\ImageViewer_2\default.png)"); //"E:\图片(New)\Mirror.png"    //"E:\\Qt5.14.2\\Projects\\ImageViewer_2\\default.png"
+    toShow = applyEffectToPixmap(pixmap, createShadowEffect(Shadow_R), Shadow_R);
+
     pixRect.setSize(pixmap.size());
     pixRect.moveCenter(this->rect().center());
 
@@ -60,6 +61,11 @@ void Widget::scalePixmap(qreal scale, const QPoint& center)
         QPoint oldCurPos = center - pixRect.topLeft(); //relative
         QPoint newCurPos = oldCurPos * (scale / scaleSize);
         toShow = pixmap.scaled(newSize);
+        if (pixels <= Shadow_P_Limit) { //究极优化（图片太大 计算阴影卡顿）
+            toShow = applyEffectToPixmap(toShow, createShadowEffect(Shadow_R), Shadow_R);
+            isShadowDrop = true;
+        } else
+            isShadowDrop = false;
         pixRect.translate(oldCurPos - newCurPos);
         pixRect.setSize(newSize);
         scaleSize = scale;
@@ -76,15 +82,6 @@ void Widget::updateInfo()
     ui->label_info->adjustSize();
 }
 
-void Widget::setShadowEffect(QWidget* widget, const QPoint& offset, const QColor& color, int radius)
-{
-    QGraphicsDropShadowEffect* effect = new QGraphicsDropShadowEffect(this);
-    effect->setOffset(offset); //设置向哪个方向产生阴影效果(dx,dy)，特别地，(0,0)代表向四周发散
-    effect->setColor(color);
-    effect->setBlurRadius(radius);
-    widget->setGraphicsEffect(effect);
-}
-
 void Widget::adjustBtnPos()
 {
     ui->Btns->move(pixRect.left(), pixRect.bottom());
@@ -97,16 +94,38 @@ void Widget::setIcon(QAbstractButton* btn, const QString& iconName, const QStrin
     btn->setIcon(QIcon(path));
 }
 
+QPixmap Widget::applyEffectToPixmap(const QPixmap& pixmap, QGraphicsEffect* effect, int extent)
+{
+    if (pixmap.isNull()) return pixmap;
+
+    QGraphicsScene scene;
+    QGraphicsPixmapItem item;
+    item.setPixmap(pixmap);
+    item.setGraphicsEffect(effect);
+    scene.addItem(&item);
+    QPixmap res(pixmap.size() + QSize(extent * 2, extent * 2));
+    res.fill(Qt::transparent);
+    QPainter ptr(&res);
+    scene.render(&ptr, QRectF(), QRectF(-extent, -extent, pixmap.width() + extent * 2, pixmap.height() + extent * 2));
+    return res;
+}
+
+QGraphicsDropShadowEffect* Widget::createShadowEffect(int radius, const QPoint& offset, const QColor& color)
+{
+    QGraphicsDropShadowEffect* effect = new QGraphicsDropShadowEffect(this);
+    effect->setBlurRadius(radius);
+    effect->setColor(color);
+    effect->setOffset(offset);
+    return effect;
+}
+
 void Widget::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event)
     QPainter painter(this);
-    static QPen pen;
-    pen.setWidth(4);
-    pen.setJoinStyle(Qt::MiterJoin); //使矩形边角尖锐
-    painter.setPen(pen);
-    painter.drawRect(pixRect);
-    painter.drawPixmap(pixRect.topLeft(), toShow);
+    QPoint startPos = pixRect.topLeft();
+    if (isShadowDrop) startPos -= QPoint(Shadow_R, Shadow_R);
+    painter.drawPixmap(startPos, toShow);
 }
 
 void Widget::mousePressEvent(QMouseEvent* event)

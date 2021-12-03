@@ -2,6 +2,9 @@
 #define WIDGET_H
 
 #include <QAbstractButton>
+#include <QGraphicsEffect>
+#include <QGraphicsPixmapItem>
+#include <QGraphicsScene>
 #include <QPair>
 #include <QRect>
 #include <QWidget>
@@ -22,9 +25,10 @@ public:
     bool isInPixelRange(int pixels);
     void scalePixmap(qreal scale, const QPoint& center); //缩放中心
     void updateInfo(void);
-    void setShadowEffect(QWidget* widget, const QPoint& offset, const QColor& color, int radius);
     void adjustBtnPos(void);
     void setIcon(QAbstractButton* btn, const QString& iconName, const QString& suffix = ".ico", const QString& dir = "images"); //default for inner resource
+    QPixmap applyEffectToPixmap(const QPixmap& pixmap, QGraphicsEffect* effect, int extent = 0);
+    QGraphicsDropShadowEffect* createShadowEffect(int radius, const QPoint& offset = QPoint(0, 0), const QColor& color = QColor(20, 20, 20));
 
 private:
     Ui::Widget* ui;
@@ -35,7 +39,10 @@ private:
     QPixmap pixmap;
     QPixmap toShow;
     qreal scaleSize = 1.0;
-    QPair<int, int> pixelRange { (int)1e3, (int)1e8 };
+    const QPair<int, int> pixelRange { (int)1e3, (int)1e8 };
+    const int Shadow_P_Limit = 1.5e6;
+    const int Shadow_R = 15;
+    bool isShadowDrop = true;
 
     // QWidget interface
 protected:
