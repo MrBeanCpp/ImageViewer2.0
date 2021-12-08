@@ -131,10 +131,11 @@ void Widget::updateAll()
 
 QRegion Widget::toDrawRegion()
 {
-    QRegion res = pixRect.marginsAdded(QMargins(Shadow_R * 2, Shadow_R * 2, Shadow_R * 2, Shadow_R * 2));
+    const int Extend = Shadow_R + 200; //防止残影
+    QRegion res = pixRect.marginsAdded(QMargins(Extend, Extend, Extend, Extend));
     res += ui->Btns->geometry();
     res += ui->label_info->geometry();
-    return res;
+    return res.intersected(this->rect());
 }
 
 void Widget::paintEvent(QPaintEvent* event)
