@@ -5,3 +5,8 @@
     （可能在全屏时 任务栏自动消失（而非覆盖））
 
 3.增加pixmap 阴影 with QGraphicsScene
+    优化：像素值过大时 取消阴影渲染（减少卡顿）
+
+4.破案了 透明窗体 会让mouseMoveEvent卡顿（与其Size有关）
+    不是paintEvent()频率低(>100)而是检测鼠标移动的频率低
+    #Solve：通过设置窗口Mask的方法解决（减少透明面积 也许mask之外的不算渲染）

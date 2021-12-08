@@ -29,6 +29,9 @@ public:
     void setIcon(QAbstractButton* btn, const QString& iconName, const QString& suffix = ".ico", const QString& dir = "images"); //default for inner resource
     QPixmap applyEffectToPixmap(const QPixmap& pixmap, QGraphicsEffect* effect, int extent = 0);
     QGraphicsDropShadowEffect* createShadowEffect(int radius, const QPoint& offset = QPoint(0, 0), const QColor& color = QColor(20, 20, 20));
+    void setPixmap(const QString& path);
+    void updateAll(void);
+    QRegion toDrawRegion(void);
 
 private:
     Ui::Widget* ui;
@@ -36,8 +39,8 @@ private:
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;
     bool canMovePix = false;
-    QPixmap pixmap;
-    QPixmap toShow;
+    QPixmap pixmap; //原始图像
+    QPixmap toShow; //缩放的图像(实际显示)
     qreal scaleSize = 1.0;
     const QPair<int, int> pixelRange { (int)1e3, (int)1e8 };
     const int Shadow_P_Limit = 1.5e6;

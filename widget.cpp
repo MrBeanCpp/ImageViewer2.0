@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScreen>
+#include <QTime>
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
@@ -15,7 +16,7 @@ Widget::Widget(QWidget *parent)
     this->setFocusPolicy(Qt::StrongFocus);
     move(0, 0);
     //showFullScreen();
-    //setWindowState(Qt::WindowMaximized);//对无边框窗口无效
+    //setWindowState(Qt::WindowMaximized); //对无边框窗口无效
     setFixedSize(qApp->screens().at(0)->geometry().size() - QSize(0, 1)); //留1px 便于触发任务栏（自动隐藏）
 
     ui->label_info->move(20, -1);
@@ -34,8 +35,7 @@ Widget::Widget(QWidget *parent)
     pixRect.setSize(pixmap.size());
     pixRect.moveCenter(this->rect().center());
 
-    updateInfo();
-    adjustBtnPos();
+    updateAll();
 }
 
 Widget::~Widget()
@@ -70,9 +70,7 @@ void Widget::scalePixmap(qreal scale, const QPoint& center)
         pixRect.setSize(newSize);
         scaleSize = scale;
 
-        updateInfo();
-        adjustBtnPos();
-        update();
+        updateAll();
     }
 }
 
@@ -119,18 +117,50 @@ QGraphicsDropShadowEffect* Widget::createShadowEffect(int radius, const QPoint& 
     return effect;
 }
 
+void Widget::setPixmap(const QString& path)
+{
+}
+
+void Widget::updateAll()
+{
+    updateInfo();
+    adjustBtnPos();
+    this->setMask(toDrawRegion());
+    update();
+}
+
+QRegion Widget::toDrawRegion()
+{
+    QRegion res = pixRect.marginsAdded(QMargins(Shadow_R * 2, Shadow_R * 2, Shadow_R * 2, Shadow_R * 2));
+    res += ui->Btns->geometry();
+    res += ui->label_info->geometry();
+    return res;
+}
+
 void Widget::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event)
+
+    static int cnt = 0;
+    static QTime pre = QTime::currentTime();
     QPainter painter(this);
     QPoint startPos = pixRect.topLeft();
     if (isShadowDrop) startPos -= QPoint(Shadow_R, Shadow_R);
     painter.drawPixmap(startPos, toShow);
+
+    QTime now = QTime::currentTime();
+    if (now.second() == pre.second()) {
+        cnt++;
+    } else {
+        qDebug() << "fps: " << cnt;
+        cnt = 0;
+    }
+    pre = now;
 }
 
 void Widget::mousePressEvent(QMouseEvent* event)
 {
-    curPos = event->pos();
+    curPos = event->globalPos();
     if (event->button() == Qt::LeftButton && isOnPixmap(curPos))
         canMovePix = true; //防止鼠标在其他部分移动
 }
@@ -143,15 +173,15 @@ void Widget::mouseReleaseEvent(QMouseEvent* event)
         canMovePix = false;
 }
 
-void Widget::mouseMoveEvent(QMouseEvent* event)
+void Widget::mouseMoveEvent(QMouseEvent* event) //破案了 透明窗体 会让mouseMoveEvent卡顿（与其Size有关）//通过设置窗口Mask的方法解决(减少面积)
 {
     if (!(event->buttons() & Qt::LeftButton) || !canMovePix) return;
-    QPoint mousePos = event->pos();
+    QPoint mousePos = event->globalPos();
     QPoint newPos = pixRect.topLeft() + mousePos - curPos;
     curPos = mousePos;
     pixRect.moveTopLeft(newPos);
-    update();
-    adjustBtnPos();
+
+    updateAll();
 }
 
 void Widget::keyReleaseEvent(QKeyEvent* event)
