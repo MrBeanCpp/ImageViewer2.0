@@ -23,7 +23,7 @@ public:
 
     bool isOnPixmap(const QPoint& curPos);
     bool isInPixelRange(int pixels);
-    void scalePixmap(qreal scale, const QPoint& center); //缩放中心
+    void scalePixmap(qreal scale, const QPoint& center = QPoint()); //缩放中心
     void updateInfo(void);
     void adjustBtnPos(void);
     void setIcon(QAbstractButton* btn, const QString& iconName, const QString& suffix = ".ico", const QString& dir = "images"); //default for inner resource
@@ -32,6 +32,7 @@ public:
     void setPixmap(const QString& path);
     void updateAll(void);
     QRegion toDrawRegion(void);
+    qreal scaleToScreen(const QPixmap& pixmap);
 
 private:
     Ui::Widget* ui;
@@ -46,6 +47,9 @@ private:
     const int Shadow_P_Limit = 1.5e6;
     const int Shadow_R = 15;
     bool isShadowDrop = true;
+    const QString defaultImage = R"(E:\Qt5.14.2\Projects\ImageViewer_2\default.png)";
+    QString ImagePath;
+    QScreen* screen;
 
     // QWidget interface
 protected:
