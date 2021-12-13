@@ -11,3 +11,5 @@
     不是paintEvent()频率低(>100)而是检测鼠标移动的频率低
     #Solve：通过设置窗口Mask的方法解决（减少透明面积 也许mask之外的不算渲染）
     但会有残影：通过增加extend解决
+    ↑Nonono 未触及根本 ：update并非实时生效，所以setMask得放在paintEvent中确保Mask & painter同时生效
+    同时在setMask前clearMask(); //防止mask更新不及时 导致显示不完全

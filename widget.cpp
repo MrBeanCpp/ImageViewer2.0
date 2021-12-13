@@ -131,7 +131,7 @@ void Widget::setPixmap(const QString& path)
         QTimer::singleShot(0, [=]() { qApp->quit(); }); //需要进入事件循环后触发
         return;
     }
-    scaleSize = scaleToScreen(pixmap);
+    scaleSize = qMin(scaleToScreen(pixmap), 1.0); //缩放到能完全显示
     pixRect.setSize(pixmap.size() * scaleSize);
     pixRect.moveCenter(this->rect().center());
 
@@ -146,13 +146,13 @@ void Widget::updateAll()
 {
     updateInfo();
     adjustBtnPos();
-    this->setMask(toDrawRegion());
     update();
+    //this->setMask(toDrawRegion());//update并非实时生效，所以得放在paintEvent中确保Mask & painter同时生效
 }
 
 QRegion Widget::toDrawRegion()
 {
-    const int Extend = Shadow_R + 200; //防止残影
+    const int Extend = Shadow_R + 25; //防止残影
     QRegion res = pixRect.marginsAdded(QMargins(Extend, Extend, Extend, Extend));
     res += ui->Btns->geometry();
     res += ui->label_info->geometry();
@@ -163,7 +163,7 @@ qreal Widget::scaleToScreen(const QPixmap& pixmap)
 {
     const QSize sSize = screen->size();
     const QSize pixSize = pixmap.size();
-    if (sSize.width() > pixSize.width() && sSize.height() > pixSize.height()) return 1.0;
+    //if (sSize.width() > pixSize.width() && sSize.height() > pixSize.height()) return 1.0;
     qreal sW = (qreal)sSize.width() / pixSize.width();
     qreal sH = (qreal)sSize.height() / pixSize.height();
     return qMin(sW, sH);
@@ -172,22 +172,13 @@ qreal Widget::scaleToScreen(const QPixmap& pixmap)
 void Widget::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event)
-
-    //    static int cnt = 0;
-    //    static QTime pre = QTime::currentTime();
     QPainter painter(this);
     QPoint startPos = pixRect.topLeft();
     if (isShadowDrop) startPos -= QPoint(Shadow_R, Shadow_R);
     painter.drawPixmap(startPos, toShow);
 
-    //    QTime now = QTime::currentTime();
-    //    if (now.second() == pre.second()) {
-    //        cnt++;
-    //    } else {
-    //        qDebug() << "fps: " << cnt;
-    //        cnt = 0;
-    //    }
-    //    pre = now;
+    this->clearMask(); //防止mask更新不及时 导致显示不完全
+    this->setMask(toDrawRegion());
 }
 
 void Widget::mousePressEvent(QMouseEvent* event)
@@ -220,10 +211,14 @@ void Widget::keyReleaseEvent(QKeyEvent* event)
 {
     switch (event->key()) {
     case Qt::Key_Space: //100%
-        scalePixmap(1.0, this->rect().center());
+        scalePixmap(1.0, QCursor::pos());
+        pixRect.moveCenter(this->rect().center());
+        updateAll();
         break;
     case Qt::Key_Backspace: //适应屏幕
-        scalePixmap(scaleToScreen(pixmap), this->rect().center());
+        scalePixmap(scaleToScreen(pixmap), QCursor::pos());
+        pixRect.moveCenter(this->rect().center());
+        updateAll();
         break;
     case Qt::Key_Escape:
         qApp->quit();
