@@ -7,6 +7,7 @@
 #include <QGraphicsScene>
 #include <QPair>
 #include <QRect>
+#include <QTime>
 #include <QWidget>
 #include <windows.h>
 QT_BEGIN_NAMESPACE
@@ -50,6 +51,7 @@ private:
     const QString defaultImage = R"(E:\Qt5.14.2\Projects\ImageViewer_2\default.png)";
     QString ImagePath;
     QScreen* screen;
+    //QTime rightButtonPress;
 
     // QWidget interface
 protected:
@@ -60,6 +62,7 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
+    //void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
 
     // QWidget interface

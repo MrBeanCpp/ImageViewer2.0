@@ -6,7 +6,6 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QScreen>
-#include <QTime>
 #include <QTimer>
 Widget::Widget(QWidget* parent)
     : QWidget(parent)
@@ -22,6 +21,10 @@ Widget::Widget(QWidget* parent)
     //showFullScreen();
     //setWindowState(Qt::WindowMaximized); //对无边框窗口无效
     setFixedSize(screen->geometry().size() - QSize(0, 1)); //留1px 便于触发任务栏（自动隐藏）
+
+    ui->circleMenu->setFixedSize(size());
+    ui->circleMenu->move(0, 0);
+    ui->circleMenu->hide();
 
     ui->label_info->move(20, -1);
 
@@ -178,37 +181,50 @@ void Widget::paintEvent(QPaintEvent* event)
     painter.drawPixmap(startPos, toShow);
 
     this->clearMask(); //防止mask更新不及时 导致显示不完全
-    this->setMask(toDrawRegion());
+    if (ui->circleMenu->isHidden()) //防止截断circleMenu
+        this->setMask(toDrawRegion());
 }
 
 void Widget::mousePressEvent(QMouseEvent* event)
 {
     curPos = event->globalPos();
-    if (event->button() == Qt::LeftButton && isOnPixmap(curPos))
-        canMovePix = true; //防止鼠标在其他部分移动
+    if (!isOnPixmap(curPos)) return; //防止鼠标在其他部分移动
+    if (event->button() == Qt::LeftButton)
+        canMovePix = true;
+    else if (event->button() == Qt::RightButton) { //延迟触发：长按为Menu 短按为quit
+        QTimer::singleShot(100, [=]() { ui->circleMenu->setStartPos(curPos); });
+    }
 }
 
 void Widget::mouseReleaseEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::RightButton)
-        qApp->quit();
-    else if (event->button() == Qt::LeftButton)
+    if (event->button() == Qt::RightButton) {
+        if (ui->circleMenu->isVisible()) //延迟触发：长按为Menu 短按为quit
+            ui->circleMenu->release();
+        else
+            qApp->quit();
+    } else if (event->button() == Qt::LeftButton)
         canMovePix = false;
 }
 
 void Widget::mouseMoveEvent(QMouseEvent* event) //破案了 透明窗体 会让mouseMoveEvent卡顿（与其Size有关）//通过设置窗口Mask的方法解决(减少面积)
 {
-    if (!(event->buttons() & Qt::LeftButton) || !canMovePix) return;
-    QPoint mousePos = event->globalPos();
-    QPoint newPos = pixRect.topLeft() + mousePos - curPos;
-    curPos = mousePos;
-    pixRect.moveTopLeft(newPos);
+    if ((event->buttons() & Qt::LeftButton) && canMovePix) {
+        QPoint mousePos = event->globalPos();
+        QPoint newPos = pixRect.topLeft() + mousePos - curPos;
+        curPos = mousePos;
+        pixRect.moveTopLeft(newPos);
 
-    updateAll();
+        updateAll();
+    } else if (event->buttons() & Qt::RightButton) {
+        ui->circleMenu->setEndPos(event->globalPos());
+    }
 }
 
 void Widget::keyReleaseEvent(QKeyEvent* event)
 {
+    if (event->isAutoRepeat()) return; //过滤自动触发
+
     switch (event->key()) {
     case Qt::Key_Space: //100%
         scalePixmap(1.0, QCursor::pos());
