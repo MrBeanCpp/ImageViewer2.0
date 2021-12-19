@@ -51,6 +51,9 @@
      <height>39</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <property name="spacing">
      <number>5</number>
@@ -177,6 +180,23 @@ QPushButton:pressed{
     </rect>
    </property>
   </widget>
+  <widget class="QLabel" name="label_image">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>150</y>
+     <width>131</width>
+     <height>121</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Image</string>
+   </property>
+  </widget>
+  <zorder>label_image</zorder>
+  <zorder>label_info</zorder>
+  <zorder>Btns</zorder>
+  <zorder>circleMenu</zorder>
  </widget>
  <customwidgets>
   <customwidget>

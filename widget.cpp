@@ -28,6 +28,8 @@ Widget::Widget(QWidget* parent)
 
     ui->label_info->move(20, -1);
 
+    ui->label_image->setAttribute(Qt::WA_TransparentForMouseEvents); //鼠标穿透 父窗口处理鼠标事件
+
     ui->btn_info->setFocusProxy(this); //委托焦点，防止点击按钮 label焦点丢失
     ui->btn_pin->setFocusProxy(this);
 
@@ -149,17 +151,9 @@ void Widget::updateAll()
 {
     updateInfo();
     adjustBtnPos();
-    update();
-    //this->setMask(toDrawRegion());//update并非实时生效，所以得放在paintEvent中确保Mask & painter同时生效
-}
 
-QRegion Widget::toDrawRegion()
-{
-    const int Extend = Shadow_R + 25; //防止残影
-    QRegion res = pixRect.marginsAdded(QMargins(Extend, Extend, Extend, Extend));
-    res += ui->Btns->geometry();
-    res += ui->label_info->geometry();
-    return res.intersected(this->rect());
+    ui->label_image->setGeometry(getShadowRect(pixRect, Shadow_R));
+    ui->label_image->setPixmap(toShow);
 }
 
 qreal Widget::scaleToScreen(const QPixmap& pixmap)
@@ -172,17 +166,10 @@ qreal Widget::scaleToScreen(const QPixmap& pixmap)
     return qMin(sW, sH);
 }
 
-void Widget::paintEvent(QPaintEvent* event)
+QRect Widget::getShadowRect(const QRect& rect, int Shadow_R)
 {
-    Q_UNUSED(event)
-    QPainter painter(this);
-    QPoint startPos = pixRect.topLeft();
-    if (isShadowDrop) startPos -= QPoint(Shadow_R, Shadow_R);
-    painter.drawPixmap(startPos, toShow);
-
-    this->clearMask(); //防止mask更新不及时 导致显示不完全
-    if (ui->circleMenu->isHidden()) //防止截断circleMenu
-        this->setMask(toDrawRegion());
+    QRect shadowRect = rect.marginsAdded(QMargins(Shadow_R, Shadow_R, Shadow_R, Shadow_R));
+    return isShadowDrop ? shadowRect : rect;
 }
 
 void Widget::mousePressEvent(QMouseEvent* event)

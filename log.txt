@@ -13,3 +13,8 @@
     但会有残影：通过增加extend解决
     ↑Nonono 未触及根本 ：update并非实时生效，所以setMask得放在paintEvent中确保Mask & painter同时生效
     同时在setMask前clearMask(); //防止mask更新不及时 导致显示不完全
+
+5.给控件添加QGraphicsDropShadowEffect：在坐标为负时报错，所以先生成阴影pixmap再显示图片
+6.##自己paintEvent绘制 无优化 CPU占用很高，改用QLabel作为载体 并设置鼠标穿透 让主窗体接收鼠标事件
+    采用现有控件后，mouseMoveEvent卡顿也迎刃而解，应该是有优化
+    不过绘制复杂图形 最好还是采用QGraphicSense or QOpenGL，自己绘制将会出问题

@@ -32,8 +32,8 @@ public:
     QGraphicsDropShadowEffect* createShadowEffect(int radius, const QPoint& offset = QPoint(0, 0), const QColor& color = QColor(20, 20, 20));
     void setPixmap(const QString& path);
     void updateAll(void);
-    QRegion toDrawRegion(void);
     qreal scaleToScreen(const QPixmap& pixmap);
+    QRect getShadowRect(const QRect& rect, int Shadow_R);
 
 private:
     Ui::Widget* ui;
@@ -51,11 +51,6 @@ private:
     const QString defaultImage = R"(E:\Qt5.14.2\Projects\ImageViewer_2\default.png)";
     QString ImagePath;
     QScreen* screen;
-    //QTime rightButtonPress;
-
-    // QWidget interface
-protected:
-    void paintEvent(QPaintEvent* event) override;
 
     // QWidget interface
 protected:
