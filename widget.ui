@@ -130,6 +130,9 @@ QPushButton:pressed{
         <family>Consolas</family>
        </font>
       </property>
+      <property name="toolTip">
+       <string>置顶</string>
+      </property>
       <property name="styleSheet">
        <string notr="true">QPushButton{
 	background-color:rgba(180,180,180,100);

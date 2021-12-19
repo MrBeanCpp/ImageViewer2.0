@@ -22,6 +22,20 @@ Widget::Widget(QWidget* parent)
     //setWindowState(Qt::WindowMaximized); //对无边框窗口无效
     setFixedSize(screen->geometry().size() - QSize(0, 1)); //留1px 便于触发任务栏（自动隐藏）
 
+    ui->circleMenu->appendAction("适应屏幕", [=]() {
+        scalePixmap(scaleToScreen(pixmap), QCursor::pos());
+        pixRect.moveCenter(this->rect().center());
+        updateAll();
+    });
+    ui->circleMenu->appendAction("100%", [=]() {
+        scalePixmap(1.0, QCursor::pos());
+        pixRect.moveCenter(this->rect().center());
+        updateAll();
+    });
+    ui->circleMenu->appendAction("Quit", [=]() {
+        qApp->quit();
+    });
+
     ui->circleMenu->setFixedSize(size());
     ui->circleMenu->move(0, 0);
     ui->circleMenu->hide();
@@ -153,7 +167,7 @@ void Widget::updateAll()
     adjustBtnPos();
 
     ui->label_image->setGeometry(getShadowRect(pixRect, Shadow_R));
-    ui->label_image->setPixmap(toShow);
+    ui->label_image->setPixmap(toShow); //只是个载体
 }
 
 qreal Widget::scaleToScreen(const QPixmap& pixmap)
