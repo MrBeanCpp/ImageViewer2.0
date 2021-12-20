@@ -94,6 +94,15 @@ QRect CircleMenu::getBoundingRect() //获取整个CircleMenu的bounding Rect //�
     return region.boundingRect();
 }
 
+void CircleMenu::renameAction(const QString& oldName, const QString& newName)
+{
+    for (auto& pair : itemList)
+        if (pair.first == oldName) {
+            pair.first = newName;
+            return;
+        }
+}
+
 void CircleMenu::paintEvent(QPaintEvent* event)
 {
     Q_UNUSED(event)

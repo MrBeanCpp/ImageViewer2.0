@@ -35,6 +35,8 @@ public:
     qreal scaleToScreen(const QPixmap& pixmap);
     QRect getShadowRect(const QRect& rect, int Shadow_R);
     void setCircleMenuActions(void);
+    void scaleAndMove(qreal scale, const QPoint& center);
+    void setThumbnailPixmap(const QPixmap& pixmap); //废弃 跟无边框窗口冲突 效果不好
 
 private:
     Ui::Widget* ui;

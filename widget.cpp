@@ -7,6 +7,7 @@
 #include <QPainter>
 #include <QScreen>
 #include <QTimer>
+#include <QWinThumbnailToolBar>
 Widget::Widget(QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
@@ -16,6 +17,7 @@ Widget::Widget(QWidget* parent)
     setWindowFlag(Qt::FramelessWindowHint);
     setAttribute(Qt::WA_TranslucentBackground); //启用半透明背景//也可以实现背景穿透！！！
 
+    setWindowTitle("ImageViewer2.0");
     this->setFocusPolicy(Qt::StrongFocus);
     move(0, 0);
     //showFullScreen();
@@ -38,6 +40,10 @@ Widget::Widget(QWidget* parent)
     connect(ui->btn_pin, &QPushButton::clicked, [=](bool checked) { //前置
         SetWindowPos(HWND(winId()), checked ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
         setIcon(ui->btn_pin, checked ? "pin_on" : "pin_off");
+        if (checked)
+            ui->circleMenu->renameAction("Set 置顶", "取消置顶");
+        else
+            ui->circleMenu->renameAction("取消置顶", "Set 置顶");
     });
 
     connect(ui->btn_info, &QPushButton::clicked, [=]() { //打开文件夹并选中
@@ -146,6 +152,8 @@ void Widget::setPixmap(const QString& path)
 
     ui->btn_info->setToolTip(QFileInfo(path).fileName() + " [Click to Open]");
 
+    //QTimer::singleShot(0, [=]() { setThumbnailPixmap(pixmap); });
+
     updateAll();
 }
 
@@ -180,21 +188,33 @@ void Widget::setCircleMenuActions()
         ui->btn_info->click();
     });
     ui->circleMenu->appendAction("适应屏幕", [=]() {
-        scalePixmap(scaleToScreen(pixmap), QCursor::pos());
-        pixRect.moveCenter(this->rect().center());
-        updateAll();
+        scaleAndMove(scaleToScreen(pixmap), this->rect().center());
     });
     ui->circleMenu->appendAction("100%", [=]() {
-        scalePixmap(1.0, QCursor::pos());
-        pixRect.moveCenter(this->rect().center());
-        updateAll();
+        scaleAndMove(1.0, this->rect().center());
     });
     ui->circleMenu->appendAction("Quit", [=]() {
         qApp->quit();
     });
-    ui->circleMenu->appendAction("置顶/取消", [=]() {
+    ui->circleMenu->appendAction("Set 置顶", [=]() {
         ui->btn_pin->click();
     });
+}
+
+void Widget::scaleAndMove(qreal scale, const QPoint& center)
+{
+    scalePixmap(scale, QCursor::pos());
+    pixRect.moveCenter(center);
+    updateAll();
+}
+
+void Widget::setThumbnailPixmap(const QPixmap& pixmap) //废弃 跟无边框窗口冲突 效果不好
+{
+    static QWinThumbnailToolBar* thumbbar = new QWinThumbnailToolBar(this);
+    thumbbar->setWindow(windowHandle()); //必须在窗口显示后(构造完成后) or Handle == 0
+
+    thumbbar->setIconicThumbnailPixmap(pixmap);
+    thumbbar->setIconicLivePreviewPixmap(pixmap);
 }
 
 void Widget::mousePressEvent(QMouseEvent* event)
@@ -240,14 +260,10 @@ void Widget::keyReleaseEvent(QKeyEvent* event)
 
     switch (event->key()) {
     case Qt::Key_Space: //100%
-        scalePixmap(1.0, QCursor::pos());
-        pixRect.moveCenter(this->rect().center());
-        updateAll();
+        scaleAndMove(1.0, this->rect().center());
         break;
     case Qt::Key_Backspace: //适应屏幕
-        scalePixmap(scaleToScreen(pixmap), QCursor::pos());
-        pixRect.moveCenter(this->rect().center());
-        updateAll();
+        scaleAndMove(scaleToScreen(pixmap), this->rect().center());
         break;
     case Qt::Key_Escape:
         qApp->quit();

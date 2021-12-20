@@ -26,6 +26,7 @@ public:
     void calcBtnRects(void);
     bool isSelected(void);
     QRect getBoundingRect(void); //废弃 每次move都要运算会增大CPU压力
+    void renameAction(const QString& oldName, const QString& newName);
 
 private:
     Ui::CircleMenu* ui;
