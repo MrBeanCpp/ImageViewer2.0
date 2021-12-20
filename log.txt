@@ -18,3 +18,6 @@
 6.##自己paintEvent绘制 无优化 CPU占用很高，改用QLabel作为载体 并设置鼠标穿透 让主窗体接收鼠标事件
     采用现有控件后，mouseMoveEvent卡顿也迎刃而解，应该是有优化
     不过绘制复杂图形 最好还是采用QGraphicSense or QOpenGL，自己绘制将会出问题
+
+7.自行paintEvent时，setMask可以减轻CPU压力（即便背景透明）
+    但是不要频繁setMask 还是会增大CPU占用

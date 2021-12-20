@@ -34,6 +34,7 @@ public:
     void updateAll(void);
     qreal scaleToScreen(const QPixmap& pixmap);
     QRect getShadowRect(const QRect& rect, int Shadow_R);
+    void setCircleMenuActions(void);
 
 private:
     Ui::Widget* ui;

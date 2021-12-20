@@ -23,16 +23,21 @@ public:
     void release(void);
     QRect getTextRect(const QFont& font, const QString& text);
     void appendAction(const QString& text, std::function<void(void)> func);
+    void calcBtnRects(void);
+    bool isSelected(void);
+    QRect getBoundingRect(void); //废弃 每次move都要运算会增大CPU压力
 
 private:
     Ui::CircleMenu* ui;
 
     QPoint startPos, endPos;
     bool startMenu = false;
-    int highLight = 0;
+    int highLight = -1;
     const int radius = 75;
-    const int safeRadius = 20;
+    const int safeRadius = 25;
     QList<QPair<QString, std::function<void(void)>>> itemList; //"适应屏幕", "退出", "Bomb", "shutdown", "Noooooooo"
+    QList<QRect> btns;
+    QFont font { "微软雅黑", 9 };
 
     // QWidget interface
 protected:

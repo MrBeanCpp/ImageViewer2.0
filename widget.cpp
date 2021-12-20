@@ -22,19 +22,7 @@ Widget::Widget(QWidget* parent)
     //setWindowState(Qt::WindowMaximized); //对无边框窗口无效
     setFixedSize(screen->geometry().size() - QSize(0, 1)); //留1px 便于触发任务栏（自动隐藏）
 
-    ui->circleMenu->appendAction("适应屏幕", [=]() {
-        scalePixmap(scaleToScreen(pixmap), QCursor::pos());
-        pixRect.moveCenter(this->rect().center());
-        updateAll();
-    });
-    ui->circleMenu->appendAction("100%", [=]() {
-        scalePixmap(1.0, QCursor::pos());
-        pixRect.moveCenter(this->rect().center());
-        updateAll();
-    });
-    ui->circleMenu->appendAction("Quit", [=]() {
-        qApp->quit();
-    });
+    setCircleMenuActions();
 
     ui->circleMenu->setFixedSize(size());
     ui->circleMenu->move(0, 0);
@@ -186,6 +174,29 @@ QRect Widget::getShadowRect(const QRect& rect, int Shadow_R)
     return isShadowDrop ? shadowRect : rect;
 }
 
+void Widget::setCircleMenuActions()
+{
+    ui->circleMenu->appendAction("打开文件位置", [=]() {
+        ui->btn_info->click();
+    });
+    ui->circleMenu->appendAction("适应屏幕", [=]() {
+        scalePixmap(scaleToScreen(pixmap), QCursor::pos());
+        pixRect.moveCenter(this->rect().center());
+        updateAll();
+    });
+    ui->circleMenu->appendAction("100%", [=]() {
+        scalePixmap(1.0, QCursor::pos());
+        pixRect.moveCenter(this->rect().center());
+        updateAll();
+    });
+    ui->circleMenu->appendAction("Quit", [=]() {
+        qApp->quit();
+    });
+    ui->circleMenu->appendAction("置顶/取消", [=]() {
+        ui->btn_pin->click();
+    });
+}
+
 void Widget::mousePressEvent(QMouseEvent* event)
 {
     curPos = event->globalPos();
@@ -193,12 +204,13 @@ void Widget::mousePressEvent(QMouseEvent* event)
     if (event->button() == Qt::LeftButton)
         canMovePix = true;
     else if (event->button() == Qt::RightButton) { //延迟触发：长按为Menu 短按为quit
-        QTimer::singleShot(100, [=]() { ui->circleMenu->setStartPos(curPos); });
+        QTimer::singleShot(120, [=]() { ui->circleMenu->setStartPos(curPos); });
     }
 }
 
 void Widget::mouseReleaseEvent(QMouseEvent* event)
 {
+    if (!isOnPixmap(curPos)) return; //防止鼠标在其他部分移动
     if (event->button() == Qt::RightButton) {
         if (ui->circleMenu->isVisible()) //延迟触发：长按为Menu 短按为quit
             ui->circleMenu->release();
