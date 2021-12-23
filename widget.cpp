@@ -154,7 +154,8 @@ void Widget::setPixmap(const QString& path)
     toShow = applyEffectToPixmap(pixmap.scaled(pixRect.size()), createShadowEffect(Shadow_R), Shadow_R);
 
     ui->btn_info->setToolTip(QFileInfo(path).fileName() + " [Click to Open]");
-    QTimer::singleShot(100, [=]() { updateThumbnailPixmap(pixmap); }); //手动更新，否则由于retrying，到时候寻找size太慢 导致显示不全
+
+    updateThumbnailPixmap(); //通知DWM缩略图失效，下次需要缩略图时会重新获取
 
     updateAll();
 }
@@ -210,53 +211,38 @@ void Widget::scaleAndMove(qreal scale, const QPoint& center)
     updateAll();
 }
 
-void Widget::setThumbnailPixmap(const QPixmap& pixmap) //废弃 跟无边框窗口冲突 效果不好
+void Widget::setThumbnailPixmap(const QPixmap& pixmap, const QSize& maxSize)
 {
     if (thumbbar == nullptr || thumbbar->window() == nullptr || pixmap.isNull()) return;
-    static QSize maxSize(150, 150); //remember Size
 
-RETRY: //图片大小有限制（在nativeEvent的参数lparam中，但是由于QWinThumbnailBar拦截了事件导致无法得到，只能采用retry 试出最佳Size）
-    HBITMAP hbm = QtWin::toHBITMAP(pixmap.scaled(maxSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
+    HBITMAP hbm = QtWin::toHBITMAP(pixmap.scaled(maxSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     if (hbm) {
         HRESULT hr = DwmSetIconicThumbnail((HWND)this->winId(), hbm, 0); //0不显示frame Qt默认DWM_SIT_DISPLAYFRAME 显示框架
         DeleteObject(hbm);
         qDebug() << ((hr == S_OK) ? "SetIconicThumbnail SUCCESS" : "SetIconicThumbnail Failed, Retrying");
-        if (hr != S_OK) {
-            maxSize -= QSize(10, 10);
-            goto RETRY;
-        }
     }
-    qDebug() << maxSize << pixmap.scaled(maxSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation).size();
 }
 
 void Widget::setLivePreviewPixmap(const QPixmap& pixmap)
 {
     if (thumbbar == nullptr || thumbbar->window() == nullptr || pixmap.isNull()) return;
-
     thumbbar->setIconicLivePreviewPixmap(pixmap);
 }
 
-void Widget::updateThumbnailPixmap(const QPixmap& pixmap)
+void Widget::updateThumbnailPixmap() //通知DWM缩略图失效，下次需要缩略图时会重新获取
 {
-    //DwmInvalidateIconicBitmaps((HWND)this->winId()); //基本无效
-    setThumbnailPixmap(pixmap);
-    setLivePreviewPixmap(this->grab());
+    DwmInvalidateIconicBitmaps((HWND)this->winId());
 }
 
 void Widget::initThumbnailBar()
 {
     if (thumbbar == nullptr) {
         thumbbar = new QWinThumbnailToolBar(this);
-        connect(thumbbar, &QWinThumbnailToolBar::iconicThumbnailPixmapRequested, [=]() {
-            setThumbnailPixmap(pixmap);
-        });
-        connect(thumbbar, &QWinThumbnailToolBar::iconicLivePreviewPixmapRequested, [=]() {
-            setLivePreviewPixmap(this->grab());
-        });
+        qApp->installNativeEventFilter(this); //后安装filter的先获取nativeEvent 所以在↑构造之后
     }
     if (thumbbar->window() == nullptr) {
         thumbbar->setWindow(windowHandle()); //必须在窗口显示后(构造完成后) or Handle == 0
-        thumbbar->setIconicPixmapNotificationsEnabled(true);
+        thumbbar->setIconicPixmapNotificationsEnabled(true); //进行一些属性设置，否则不能设置缩略图
     }
 }
 void Widget::mousePressEvent(QMouseEvent* event)
@@ -333,4 +319,28 @@ void Widget::focusOutEvent(QFocusEvent* event)
     Q_UNUSED(event);
     ui->label_info->hide();
     ui->Btns->hide();
+}
+
+bool Widget::nativeEventFilter(const QByteArray& eventType, void* message, long* result)
+{
+    Q_UNUSED(eventType)
+    Q_UNUSED(result)
+
+    const MSG* msg = static_cast<const MSG*>(message);
+
+    switch (msg->message) {
+    case WM_DWMSENDICONICTHUMBNAIL: {
+        const QSize maxSize(HIWORD(msg->lParam), LOWORD(msg->lParam));
+        //qDebug() << "WM_DWMSENDICONICTHUMBNAIL" << maxSize;
+        setThumbnailPixmap(pixmap, maxSize);
+    }
+    //return true;
+    break;
+    case WM_DWMSENDICONICLIVEPREVIEWBITMAP:
+        //qDebug() << "WM_DWMSENDICONICLIVEPREVIEWBITMAP";
+        setLivePreviewPixmap(this->grab());
+        //return true;
+        break;
+    }
+    return false;
 }

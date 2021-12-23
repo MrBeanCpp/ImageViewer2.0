@@ -32,3 +32,7 @@
     但但但是又不显示缩略图：大小有限制（在nativeEvent的参数lparam中，但是由于QWinThumbnailBar拦截了事件导致无法得到，只能采用retry 试出最佳Size）
 
     但是 由于手动枚举Size太慢 导致显示空白，所以一开始手动调用setThumbnailPixmap 寻找最佳size
+
+    但是 手动枚举什么的 太low了 打到Qt保证 还我Native Event
+        所以多继承QAbstractNativeEventFilter 安装filter 获取第一手情报(后安装的先获取 所以要在QWinThumbnailBar构造之后)
+        直接获取WM_DWMSENDICONICTHUMBNAIL消息 得到maxSize

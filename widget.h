@@ -4,7 +4,9 @@
 #define WINVER 0x0A00
 #define _WIN32_WINNT 0x0A00
 
+#include "windows.h" //保证windows.h中的版本定义被修改 放第一个
 #include <QAbstractButton>
+#include <QAbstractNativeEventFilter>
 #include <QGraphicsEffect>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
@@ -13,13 +15,11 @@
 #include <QTime>
 #include <QWidget>
 #include <QWinThumbnailToolBar>
-#include <windows.h>
 QT_BEGIN_NAMESPACE
 namespace Ui { class Widget; }
 QT_END_NAMESPACE
 
-class Widget : public QWidget
-{
+class Widget : public QWidget, public QAbstractNativeEventFilter {
     Q_OBJECT
 
 public:
@@ -40,9 +40,9 @@ public:
     QRect getShadowRect(const QRect& rect, int Shadow_R);
     void setCircleMenuActions(void);
     void scaleAndMove(qreal scale, const QPoint& center);
-    void setThumbnailPixmap(const QPixmap& pixmap);
+    void setThumbnailPixmap(const QPixmap& pixmap, const QSize& maxSize);
     void setLivePreviewPixmap(const QPixmap& pixmap);
-    void updateThumbnailPixmap(const QPixmap& pixmap);
+    void updateThumbnailPixmap();
     void initThumbnailBar(void);
 
 private:
@@ -79,5 +79,9 @@ protected:
 protected:
     void focusInEvent(QFocusEvent* event) override;
     void focusOutEvent(QFocusEvent* event) override;
+
+    // QAbstractNativeEventFilter interface
+public:
+    bool nativeEventFilter(const QByteArray& eventType, void* message, long* result) override;
 };
 #endif // WIDGET_H
