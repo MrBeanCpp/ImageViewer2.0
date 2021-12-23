@@ -7,7 +7,8 @@
 #include <QPainter>
 #include <QScreen>
 #include <QTimer>
-#include <QWinThumbnailToolBar>
+#include <QtWinExtras>
+#include <dwmapi.h>
 Widget::Widget(QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
@@ -23,6 +24,8 @@ Widget::Widget(QWidget* parent)
     //showFullScreen();
     //setWindowState(Qt::WindowMaximized); //对无边框窗口无效
     setFixedSize(screen->geometry().size() - QSize(0, 1)); //留1px 便于触发任务栏（自动隐藏）
+
+    QTimer::singleShot(0, [=]() { initThumbnailBar(); }); //必须在窗口显示后(构造完成后) or Handle == 0
 
     setCircleMenuActions();
 
@@ -152,8 +155,6 @@ void Widget::setPixmap(const QString& path)
 
     ui->btn_info->setToolTip(QFileInfo(path).fileName() + " [Click to Open]");
 
-    //QTimer::singleShot(0, [=]() { setThumbnailPixmap(pixmap); });
-
     updateAll();
 }
 
@@ -210,13 +211,45 @@ void Widget::scaleAndMove(qreal scale, const QPoint& center)
 
 void Widget::setThumbnailPixmap(const QPixmap& pixmap) //废弃 跟无边框窗口冲突 效果不好
 {
-    static QWinThumbnailToolBar* thumbbar = new QWinThumbnailToolBar(this);
-    thumbbar->setWindow(windowHandle()); //必须在窗口显示后(构造完成后) or Handle == 0
+    if (thumbbar == nullptr || thumbbar->window() == nullptr || pixmap.isNull()) return;
+    static QSize maxSize(120, 120); //remember Size
 
-    thumbbar->setIconicThumbnailPixmap(pixmap);
+RETRY: //图片大小有限制（在nativeEvent的参数lparam中，但是由于QWinThumbnailBar拦截了事件导致无法得到，只能采用retry 试出最佳Size）
+    HBITMAP hbm = QtWin::toHBITMAP(pixmap.scaled(maxSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    if (hbm) {
+        HRESULT hr = DwmSetIconicThumbnail((HWND)this->winId(), hbm, 0); //0不显示frame Qt默认DWM_SIT_DISPLAYFRAME 显示框架
+        DeleteObject(hbm);
+        qDebug() << ((hr == S_OK) ? "SetIconicThumbnail SUCCESS" : "SetIconicThumbnail Failed, Retrying");
+        if (hr != S_OK) {
+            maxSize -= QSize(10, 10);
+            goto RETRY;
+        }
+    }
+}
+
+void Widget::setLivePreviewPixmap(const QPixmap& pixmap)
+{
+    if (thumbbar == nullptr || thumbbar->window() == nullptr || pixmap.isNull()) return;
+
     thumbbar->setIconicLivePreviewPixmap(pixmap);
 }
 
+void Widget::initThumbnailBar()
+{
+    if (thumbbar == nullptr) {
+        thumbbar = new QWinThumbnailToolBar(this);
+        connect(thumbbar, &QWinThumbnailToolBar::iconicThumbnailPixmapRequested, [=]() {
+            setThumbnailPixmap(pixmap);
+        });
+        connect(thumbbar, &QWinThumbnailToolBar::iconicLivePreviewPixmapRequested, [=]() {
+            setLivePreviewPixmap(this->grab());
+        });
+    }
+    if (thumbbar->window() == nullptr) {
+        thumbbar->setWindow(windowHandle()); //必须在窗口显示后(构造完成后) or Handle == 0
+        thumbbar->setIconicPixmapNotificationsEnabled(true);
+    }
+}
 void Widget::mousePressEvent(QMouseEvent* event)
 {
     curPos = event->globalPos();

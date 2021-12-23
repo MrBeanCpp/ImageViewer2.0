@@ -28,6 +28,8 @@ FORMS += \
     circlemenu.ui \
     widget.ui
 
+LIBS += -lDwmapi -lGdi32
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

@@ -23,3 +23,10 @@
     但是不要频繁setMask 还是会增大CPU占用
 
 8.任务栏缩略图 失败：与无边框窗口冲突 导致效果不佳
+
+9.研读Windows API文档 + Qt源码 再次尝试
+    发现Qt在调用setIconicThumbnailPixmap->DwmSetIconicThumbnail()时默认使用DWM_SIT_DISPLAYFRAME参数，在缩略图周围显示frame导致错位，且未提供修改参数
+    只能自行调用Windows API对此处进行替换
+    但是由于版本问题被屏蔽：在头文件中加入#define WINVER 0x0A00 #define _WIN32_WINNT 0x0A00
+    但但是又undefined reference：缺少链接库 在.pro文件中加入 LIBS += -lDwmapi -lGdi32
+    但但但是又不显示缩略图：大小有限制（在nativeEvent的参数lparam中，但是由于QWinThumbnailBar拦截了事件导致无法得到，只能采用retry 试出最佳Size）

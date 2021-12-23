@@ -1,6 +1,9 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
+#define WINVER 0x0A00
+#define _WIN32_WINNT 0x0A00
+
 #include <QAbstractButton>
 #include <QGraphicsEffect>
 #include <QGraphicsPixmapItem>
@@ -9,6 +12,7 @@
 #include <QRect>
 #include <QTime>
 #include <QWidget>
+#include <QWinThumbnailToolBar>
 #include <windows.h>
 QT_BEGIN_NAMESPACE
 namespace Ui { class Widget; }
@@ -36,7 +40,9 @@ public:
     QRect getShadowRect(const QRect& rect, int Shadow_R);
     void setCircleMenuActions(void);
     void scaleAndMove(qreal scale, const QPoint& center);
-    void setThumbnailPixmap(const QPixmap& pixmap); //废弃 跟无边框窗口冲突 效果不好
+    void setThumbnailPixmap(const QPixmap& pixmap);
+    void setLivePreviewPixmap(const QPixmap& pixmap);
+    void initThumbnailBar(void);
 
 private:
     Ui::Widget* ui;
@@ -54,6 +60,7 @@ private:
     const QString defaultImage = R"(E:\Qt5.14.2\Projects\ImageViewer_2\default.png)";
     QString ImagePath;
     QScreen* screen;
+    QWinThumbnailToolBar* thumbbar = nullptr;
 
     // QWidget interface
 protected:
