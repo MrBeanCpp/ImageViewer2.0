@@ -154,6 +154,7 @@ void Widget::setPixmap(const QString& path)
     toShow = applyEffectToPixmap(pixmap.scaled(pixRect.size()), createShadowEffect(Shadow_R), Shadow_R);
 
     ui->btn_info->setToolTip(QFileInfo(path).fileName() + " [Click to Open]");
+    QTimer::singleShot(100, [=]() { updateThumbnailPixmap(pixmap); }); //手动更新，否则由于retrying，到时候寻找size太慢 导致显示不全
 
     updateAll();
 }
@@ -212,10 +213,10 @@ void Widget::scaleAndMove(qreal scale, const QPoint& center)
 void Widget::setThumbnailPixmap(const QPixmap& pixmap) //废弃 跟无边框窗口冲突 效果不好
 {
     if (thumbbar == nullptr || thumbbar->window() == nullptr || pixmap.isNull()) return;
-    static QSize maxSize(120, 120); //remember Size
+    static QSize maxSize(150, 150); //remember Size
 
 RETRY: //图片大小有限制（在nativeEvent的参数lparam中，但是由于QWinThumbnailBar拦截了事件导致无法得到，只能采用retry 试出最佳Size）
-    HBITMAP hbm = QtWin::toHBITMAP(pixmap.scaled(maxSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    HBITMAP hbm = QtWin::toHBITMAP(pixmap.scaled(maxSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
     if (hbm) {
         HRESULT hr = DwmSetIconicThumbnail((HWND)this->winId(), hbm, 0); //0不显示frame Qt默认DWM_SIT_DISPLAYFRAME 显示框架
         DeleteObject(hbm);
@@ -225,6 +226,7 @@ RETRY: //图片大小有限制（在nativeEvent的参数lparam中，但是由于
             goto RETRY;
         }
     }
+    qDebug() << maxSize << pixmap.scaled(maxSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation).size();
 }
 
 void Widget::setLivePreviewPixmap(const QPixmap& pixmap)
@@ -232,6 +234,13 @@ void Widget::setLivePreviewPixmap(const QPixmap& pixmap)
     if (thumbbar == nullptr || thumbbar->window() == nullptr || pixmap.isNull()) return;
 
     thumbbar->setIconicLivePreviewPixmap(pixmap);
+}
+
+void Widget::updateThumbnailPixmap(const QPixmap& pixmap)
+{
+    //DwmInvalidateIconicBitmaps((HWND)this->winId()); //基本无效
+    setThumbnailPixmap(pixmap);
+    setLivePreviewPixmap(this->grab());
 }
 
 void Widget::initThumbnailBar()

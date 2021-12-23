@@ -30,3 +30,5 @@
     但是由于版本问题被屏蔽：在头文件中加入#define WINVER 0x0A00 #define _WIN32_WINNT 0x0A00
     但但是又undefined reference：缺少链接库 在.pro文件中加入 LIBS += -lDwmapi -lGdi32
     但但但是又不显示缩略图：大小有限制（在nativeEvent的参数lparam中，但是由于QWinThumbnailBar拦截了事件导致无法得到，只能采用retry 试出最佳Size）
+
+    但是 由于手动枚举Size太慢 导致显示空白，所以一开始手动调用setThumbnailPixmap 寻找最佳size

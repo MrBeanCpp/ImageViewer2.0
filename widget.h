@@ -42,6 +42,7 @@ public:
     void scaleAndMove(qreal scale, const QPoint& center);
     void setThumbnailPixmap(const QPixmap& pixmap);
     void setLivePreviewPixmap(const QPixmap& pixmap);
+    void updateThumbnailPixmap(const QPixmap& pixmap);
     void initThumbnailBar(void);
 
 private:
@@ -57,7 +58,7 @@ private:
     const int Shadow_P_Limit = 1.5e6;
     const int Shadow_R = 15;
     bool isShadowDrop = true;
-    const QString defaultImage = R"(E:\Qt5.14.2\Projects\ImageViewer_2\default.png)";
+    const QString defaultImage = R"(E:\Qt5.14.2\Projects\ImageViewer_2\default.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
     QString ImagePath;
     QScreen* screen;
     QWinThumbnailToolBar* thumbbar = nullptr;
