@@ -33,6 +33,19 @@
 
     但是 由于手动枚举Size太慢 导致显示空白，所以一开始手动调用setThumbnailPixmap 寻找最佳size
 
-    但是 手动枚举什么的 太low了 打到Qt保证 还我Native Event
+    但是 手动枚举什么的 太low了 打倒Qt暴政 还我Native Event
         所以多继承QAbstractNativeEventFilter 安装filter 获取第一手情报(后安装的先获取 所以要在QWinThumbnailBar构造之后)
         直接获取WM_DWMSENDICONICTHUMBNAIL消息 得到maxSize
+        (保证windows.h中的版本定义被修改 头文件放第一个)
+
+10.QtWinThumbnailToolBar原理：
+    Native事件交给单独的QWinThumbnailToolBarPrivate类(继承自QAbstractNativeEventFilter)处理，本体持有其指针
+    接收到Native事件后，开始更新缩略图（如果用setIconicThumbnailPixmap设置过的话）
+    并emit iconicThumbnailPixmapRequested供用户更新缩略图
+    如果要调用Windows API手动设置缩略图 就不能调用setIconicThumbnailPixmap否则会被覆盖
+
+    setIconicLivePreviewPixmap不进行实际更新
+    实际更新在Native Event时updateIconicLivePreview()
+    所以我们在接收事件时必须往下传递，不能return true，否则没有代码去实现LivePreview了
+    #其实根本没有必要重写与拦截LivePreview事件，用原生的就行
+    #重写Thumbail就行

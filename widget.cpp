@@ -8,7 +8,6 @@
 #include <QScreen>
 #include <QTimer>
 #include <QtWinExtras>
-#include <dwmapi.h>
 Widget::Widget(QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
@@ -155,7 +154,7 @@ void Widget::setPixmap(const QString& path)
 
     ui->btn_info->setToolTip(QFileInfo(path).fileName() + " [Click to Open]");
 
-    updateThumbnailPixmap(); //通知DWM缩略图失效，下次需要缩略图时会重新获取
+    updateThumbnailPixmap(); //通知DWM缩略图失效，下次需要缩略图时(鼠标移至任务栏图标，而非立即)会重新获取
 
     updateAll();
 }
@@ -211,39 +210,27 @@ void Widget::scaleAndMove(qreal scale, const QPoint& center)
     updateAll();
 }
 
-void Widget::setThumbnailPixmap(const QPixmap& pixmap, const QSize& maxSize)
-{
-    if (thumbbar == nullptr || thumbbar->window() == nullptr || pixmap.isNull()) return;
-
-    HBITMAP hbm = QtWin::toHBITMAP(pixmap.scaled(maxSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    if (hbm) {
-        HRESULT hr = DwmSetIconicThumbnail((HWND)this->winId(), hbm, 0); //0不显示frame Qt默认DWM_SIT_DISPLAYFRAME 显示框架
-        DeleteObject(hbm);
-        qDebug() << ((hr == S_OK) ? "SetIconicThumbnail SUCCESS" : "SetIconicThumbnail Failed, Retrying");
-    }
-}
-
-void Widget::setLivePreviewPixmap(const QPixmap& pixmap)
-{
-    if (thumbbar == nullptr || thumbbar->window() == nullptr || pixmap.isNull()) return;
-    thumbbar->setIconicLivePreviewPixmap(pixmap);
-}
-
-void Widget::updateThumbnailPixmap() //通知DWM缩略图失效，下次需要缩略图时会重新获取
-{
-    DwmInvalidateIconicBitmaps((HWND)this->winId());
-}
-
 void Widget::initThumbnailBar()
 {
-    if (thumbbar == nullptr) {
-        thumbbar = new QWinThumbnailToolBar(this);
-        qApp->installNativeEventFilter(this); //后安装filter的先获取nativeEvent 所以在↑构造之后
-    }
+    if (thumbbar == nullptr)
+        thumbbar = new WinThumbnailToolBar(this);
+
     if (thumbbar->window() == nullptr) {
         thumbbar->setWindow(windowHandle()); //必须在窗口显示后(构造完成后) or Handle == 0
         thumbbar->setIconicPixmapNotificationsEnabled(true); //进行一些属性设置，否则不能设置缩略图
     }
+    connect(thumbbar, &WinThumbnailToolBar::thumbnailRequested, [=](const QSize& size) {
+        thumbbar->setThumbnailPixmap(pixmap, size);
+    });
+    connect(thumbbar, &WinThumbnailToolBar::iconicLivePreviewPixmapRequested, [=]() {
+        thumbbar->setIconicLivePreviewPixmap(this->grab());
+    });
+}
+
+void Widget::updateThumbnailPixmap()
+{
+    if (thumbbar == nullptr || thumbbar->window() == nullptr) return; //若引用空指针，会异常退出
+    thumbbar->updateThumbnailPixmap();
 }
 void Widget::mousePressEvent(QMouseEvent* event)
 {
@@ -319,28 +306,4 @@ void Widget::focusOutEvent(QFocusEvent* event)
     Q_UNUSED(event);
     ui->label_info->hide();
     ui->Btns->hide();
-}
-
-bool Widget::nativeEventFilter(const QByteArray& eventType, void* message, long* result)
-{
-    Q_UNUSED(eventType)
-    Q_UNUSED(result)
-
-    const MSG* msg = static_cast<const MSG*>(message);
-
-    switch (msg->message) {
-    case WM_DWMSENDICONICTHUMBNAIL: {
-        const QSize maxSize(HIWORD(msg->lParam), LOWORD(msg->lParam));
-        //qDebug() << "WM_DWMSENDICONICTHUMBNAIL" << maxSize;
-        setThumbnailPixmap(pixmap, maxSize);
-    }
-    //return true;
-    break;
-    case WM_DWMSENDICONICLIVEPREVIEWBITMAP:
-        //qDebug() << "WM_DWMSENDICONICLIVEPREVIEWBITMAP";
-        setLivePreviewPixmap(this->grab());
-        //return true;
-        break;
-    }
-    return false;
 }

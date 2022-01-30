@@ -18,11 +18,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     circlemenu.cpp \
     main.cpp \
-    widget.cpp
+    widget.cpp \
+    winthumbnailtoolbar.cpp
 
 HEADERS += \
     circlemenu.h \
-    widget.h
+    widget.h \
+    winthumbnailtoolbar.h
 
 FORMS += \
     circlemenu.ui \

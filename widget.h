@@ -1,10 +1,7 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
-#define WINVER 0x0A00
-#define _WIN32_WINNT 0x0A00
-
-#include "windows.h" //保证windows.h中的版本定义被修改 放第一个
+#include "winthumbnailtoolbar.h"
 #include <QAbstractButton>
 #include <QAbstractNativeEventFilter>
 #include <QGraphicsEffect>
@@ -14,12 +11,11 @@
 #include <QRect>
 #include <QTime>
 #include <QWidget>
-#include <QWinThumbnailToolBar>
 QT_BEGIN_NAMESPACE
 namespace Ui { class Widget; }
 QT_END_NAMESPACE
 
-class Widget : public QWidget, public QAbstractNativeEventFilter {
+class Widget : public QWidget {
     Q_OBJECT
 
 public:
@@ -40,10 +36,8 @@ public:
     QRect getShadowRect(const QRect& rect, int Shadow_R);
     void setCircleMenuActions(void);
     void scaleAndMove(qreal scale, const QPoint& center);
-    void setThumbnailPixmap(const QPixmap& pixmap, const QSize& maxSize);
-    void setLivePreviewPixmap(const QPixmap& pixmap);
-    void updateThumbnailPixmap();
     void initThumbnailBar(void);
+    void updateThumbnailPixmap(void);
 
 private:
     Ui::Widget* ui;
@@ -61,7 +55,7 @@ private:
     const QString defaultImage = R"(E:\Qt5.14.2\Projects\ImageViewer_2\default.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
     QString ImagePath;
     QScreen* screen;
-    QWinThumbnailToolBar* thumbbar = nullptr;
+    WinThumbnailToolBar* thumbbar = nullptr;
 
     // QWidget interface
 protected:
@@ -79,9 +73,5 @@ protected:
 protected:
     void focusInEvent(QFocusEvent* event) override;
     void focusOutEvent(QFocusEvent* event) override;
-
-    // QAbstractNativeEventFilter interface
-public:
-    bool nativeEventFilter(const QByteArray& eventType, void* message, long* result) override;
 };
 #endif // WIDGET_H
