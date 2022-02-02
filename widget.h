@@ -38,6 +38,8 @@ public:
     void scaleAndMove(qreal scale, const QPoint& center);
     void initThumbnailBar(void);
     void updateThumbnailPixmap(void);
+    QStringList getFileList(QString dir, const QStringList& filter);
+    QString getDirPath(const QString& filePath);
 
 private:
     Ui::Widget* ui;
@@ -52,17 +54,20 @@ private:
     const int Shadow_P_Limit = 1.5e6;
     const int Shadow_R = 15;
     bool isShadowDrop = true;
-    const QString defaultImage = R"(E:\Qt5.14.2\Projects\ImageViewer_2\default.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
+    const QString defaultImage = R"(E:\图片(New)\表情包\男子高中生的日常.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
     QString ImagePath;
     QScreen* screen;
     WinThumbnailToolBar* thumbbar = nullptr;
+    QStringList fileList;
+    QString curDirPath;
+    int index = -1;
 
     // QWidget interface
 protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
-    //void keyPressEvent(QKeyEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
 
     // QWidget interface

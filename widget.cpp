@@ -49,13 +49,17 @@ Widget::Widget(QWidget* parent)
     });
 
     connect(ui->btn_info, &QPushButton::clicked, [=]() { //打开文件夹并选中
-        ShellExecuteW(NULL, L"open", L"explorer", QString("/select, \"%1\"").arg(ImagePath).toStdWString().c_str(), NULL, SW_SHOW);
+        ShellExecuteW(NULL, L"open", L"explorer", QString("/select, \"%1\"").arg(QDir::toNativeSeparators(ImagePath)).toStdWString().c_str(), NULL, SW_SHOW);
     });
 
     QStringList args = qApp->arguments();
     ImagePath = args.size() > 1 ? args.at(1) : defaultImage;
 
     setPixmap(ImagePath);
+    fileList = getFileList(ImagePath, QStringList() << "*.png"
+                                                    << "*.jpg"
+                                                    << "*.bmp");
+    index = fileList.indexOf(QFileInfo(ImagePath).fileName());
 }
 
 Widget::~Widget()
@@ -232,6 +236,21 @@ void Widget::updateThumbnailPixmap()
     if (thumbbar == nullptr || thumbbar->window() == nullptr) return; //若引用空指针，会异常退出
     thumbbar->updateThumbnailPixmap();
 }
+
+QStringList Widget::getFileList(QString dir, const QStringList& filter)
+{
+    if (dir.isEmpty()) return QStringList();
+    if (!QFileInfo(dir).isDir()) dir = getDirPath(dir);
+    this->curDirPath = dir;
+
+    return QDir(dir).entryList(filter, QDir::Files | QDir::NoSymLinks, QDir::LocaleAware);
+}
+
+QString Widget::getDirPath(const QString& filePath)
+{
+    return QFileInfo(filePath).absoluteDir().absolutePath();
+}
+
 void Widget::mousePressEvent(QMouseEvent* event)
 {
     curPos = event->globalPos();
@@ -266,6 +285,25 @@ void Widget::mouseMoveEvent(QMouseEvent* event) //破案了 透明窗体 会让m
         updateAll();
     } else if (event->buttons() & Qt::RightButton) {
         ui->circleMenu->setEndPos(event->globalPos());
+    }
+}
+
+void Widget::keyPressEvent(QKeyEvent* event)
+{
+    const int N = fileList.size();
+    switch (event->key()) {
+    case Qt::Key_Left: {
+        index = qMax(index - 1, 0);
+        QString filePath = curDirPath + '/' + fileList[index];
+        setPixmap(filePath);
+    } break;
+    case Qt::Key_Right: {
+        index = qMin(index + 1, N - 1);
+        QString filePath = curDirPath + '/' + fileList[index];
+        setPixmap(filePath);
+    } break;
+    default:
+        break;
     }
 }
 
