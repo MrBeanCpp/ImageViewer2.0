@@ -40,6 +40,7 @@ public:
     void updateThumbnailPixmap(void);
     QStringList getFileList(QString dir, const QStringList& filter);
     QString getDirPath(const QString& filePath);
+    int switchPixmap(int i); //在文件夹中切换图片(fileList)
 
 private:
     Ui::Widget* ui;

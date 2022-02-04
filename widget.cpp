@@ -251,6 +251,15 @@ QString Widget::getDirPath(const QString& filePath)
     return QFileInfo(filePath).absoluteDir().absolutePath();
 }
 
+int Widget::switchPixmap(int i)
+{
+    const int N = fileList.size();
+    index = qBound(0, i, N - 1);
+    QString filePath = curDirPath + '/' + fileList[index];
+    setPixmap(filePath);
+    return index;
+}
+
 void Widget::mousePressEvent(QMouseEvent* event)
 {
     curPos = event->globalPos();
@@ -265,13 +274,19 @@ void Widget::mousePressEvent(QMouseEvent* event)
 void Widget::mouseReleaseEvent(QMouseEvent* event)
 {
     if (!isOnPixmap(curPos)) return; //防止鼠标在其他部分移动
-    if (event->button() == Qt::RightButton) {
+    auto button = event->button();
+
+    if (button == Qt::RightButton) {
         if (ui->circleMenu->isVisible()) //延迟触发：长按为Menu 短按为quit
             ui->circleMenu->release();
         else
             qApp->quit();
-    } else if (event->button() == Qt::LeftButton)
+    } else if (button == Qt::LeftButton)
         canMovePix = false;
+    else if (button == Qt::BackButton) //鼠标侧键
+        switchPixmap(index + 1);
+    else if (button == Qt::ForwardButton) //鼠标侧键
+        switchPixmap(index - 1);
 }
 
 void Widget::mouseMoveEvent(QMouseEvent* event) //破案了 透明窗体 会让mouseMoveEvent卡顿（与其Size有关）//通过设置窗口Mask的方法解决(减少面积)
@@ -290,18 +305,13 @@ void Widget::mouseMoveEvent(QMouseEvent* event) //破案了 透明窗体 会让m
 
 void Widget::keyPressEvent(QKeyEvent* event)
 {
-    const int N = fileList.size();
     switch (event->key()) {
-    case Qt::Key_Left: {
-        index = qMax(index - 1, 0);
-        QString filePath = curDirPath + '/' + fileList[index];
-        setPixmap(filePath);
-    } break;
-    case Qt::Key_Right: {
-        index = qMin(index + 1, N - 1);
-        QString filePath = curDirPath + '/' + fileList[index];
-        setPixmap(filePath);
-    } break;
+    case Qt::Key_Left:
+        switchPixmap(index - 1);
+        break;
+    case Qt::Key_Right:
+        switchPixmap(index + 1);
+        break;
     default:
         break;
     }
