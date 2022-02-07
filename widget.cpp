@@ -20,6 +20,7 @@ Widget::Widget(QWidget* parent)
     setWindowTitle("ImageViewer2.0");
     this->setFocusPolicy(Qt::StrongFocus);
     move(0, 0);
+    ui->label_image->setScaledContents(true);
     //showFullScreen();
     //setWindowState(Qt::WindowMaximized); //对无边框窗口无效
     setFixedSize(screen->geometry().size() - QSize(0, 1)); //留1px 便于触发任务栏（自动隐藏）
@@ -58,7 +59,8 @@ Widget::Widget(QWidget* parent)
     setPixmap(ImagePath);
     fileList = getFileList(ImagePath, QStringList() << "*.png"
                                                     << "*.jpg"
-                                                    << "*.bmp");
+                                                    << "*.bmp"
+                                                    << "*.gif");
     index = fileList.indexOf(QFileInfo(ImagePath).fileName());
 }
 
@@ -84,7 +86,7 @@ void Widget::scalePixmap(qreal scale, const QPoint& center)
     if (isInPixelRange(pixels)) { //限制像素范围，使用长宽不太准确
         QPoint oldCurPos = center - pixRect.topLeft(); //relative
         QPoint newCurPos = oldCurPos * (scale / scaleSize);
-        toShow = pixmap.scaled(newSize);
+        toShow = pixmap.scaled(newSize); //其实缩放toShow & shadow对Gif没必要 但懒得改old code了(反正没啥影响d(´ω｀*))
         if (pixels <= Shadow_P_Limit) { //究极优化（图片太大 计算阴影卡顿）
             toShow = applyEffectToPixmap(toShow, createShadowEffect(Shadow_R), Shadow_R);
             isShadowDrop = true;
@@ -144,7 +146,7 @@ QGraphicsDropShadowEffect* Widget::createShadowEffect(int radius, const QPoint& 
 void Widget::setPixmap(const QString& path)
 {
     ImagePath = path;
-    pixmap = QPixmap(path);
+    pixmap = QPixmap(path); //如果是.gif则是第一帧图像
     if (pixmap.isNull()) {
         QMessageBox::warning(this, "Warning", "Error File Path!\n错误文件路径\n間違えたファイルパス");
         QTimer::singleShot(0, [=]() { qApp->quit(); }); //需要进入事件循环后触发
@@ -154,12 +156,21 @@ void Widget::setPixmap(const QString& path)
     pixRect.setSize(pixmap.size() * scaleSize);
     pixRect.moveCenter(this->rect().center());
 
-    toShow = applyEffectToPixmap(pixmap.scaled(pixRect.size()), createShadowEffect(Shadow_R), Shadow_R);
+    if (QFileInfo(path).completeSuffix().toLower() == "gif") { //.gif
+        isGif = true;
+        static QMovie* movie = nullptr; //delete nullptr SAFE
+        delete movie; //label does NOT take ownership 需要手动delete(如果多次加载gif的话)
+        movie = new QMovie(path, QByteArray(), this);
+        ui->label_image->setMovie(movie);
+        movie->start();
+    } else {
+        isGif = false;
+        toShow = applyEffectToPixmap(pixmap.scaled(pixRect.size()), createShadowEffect(Shadow_R), Shadow_R);
+    }
 
     ui->btn_info->setToolTip(QFileInfo(path).fileName() + " [Click to Open]");
 
     updateThumbnailPixmap(); //通知DWM缩略图失效，下次需要缩略图时(鼠标移至任务栏图标，而非立即)会重新获取
-
     updateAll();
 }
 
@@ -168,8 +179,12 @@ void Widget::updateAll()
     updateInfo();
     adjustBtnPos();
 
-    ui->label_image->setGeometry(getShadowRect(pixRect, Shadow_R));
-    ui->label_image->setPixmap(toShow); //只是个载体
+    if (isGif)
+        ui->label_image->setGeometry(pixRect);
+    else {
+        ui->label_image->setGeometry(getShadowRect(pixRect, Shadow_R));
+        ui->label_image->setPixmap(toShow); //只是个载体
+    }
 }
 
 qreal Widget::scaleToScreen(const QPixmap& pixmap)

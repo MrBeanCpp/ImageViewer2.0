@@ -62,6 +62,7 @@ private:
     QStringList fileList;
     QString curDirPath;
     int index = -1;
+    bool isGif = false;
 
     // QWidget interface
 protected:

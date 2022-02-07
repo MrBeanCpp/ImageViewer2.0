@@ -49,3 +49,6 @@
     所以我们在接收事件时必须往下传递，不能return true，否则没有代码去实现LivePreview了
     #其实根本没有必要重写与拦截LivePreview事件，用原生的就行
     #重写Thumbail就行
+
+11. 新增Gif支持：
+    只改了updateAll & setPixmap
