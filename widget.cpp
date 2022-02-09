@@ -61,7 +61,7 @@ Widget::Widget(QWidget* parent)
                                                     << "*.jpg"
                                                     << "*.bmp"
                                                     << "*.gif");
-    index = fileList.indexOf(QFileInfo(ImagePath).fileName());
+    index = fileList.indexOf(getFileName(ImagePath));
 }
 
 Widget::~Widget()
@@ -102,7 +102,12 @@ void Widget::scalePixmap(qreal scale, const QPoint& center)
 
 void Widget::updateInfo()
 {
-    ui->label_info->setText(QString("  W: %1  H: %2  Pixel: %3  Scale: %4%  ").arg(pixRect.width()).arg(pixRect.height()).arg(pixRect.width() * pixRect.height()).arg(scaleSize * 100, 0, 'f', 0));
+    ui->label_info->setText(QString("  W: %1  H: %2  Pixel: %3  Scale: %4%  |  [  %5  ]  ")
+                                .arg(pixRect.width())
+                                .arg(pixRect.height())
+                                .arg(pixRect.width() * pixRect.height())
+                                .arg(scaleSize * 100, 0, 'f', 0)
+                                .arg(getFileName(ImagePath)));
     ui->label_info->adjustSize();
 }
 
@@ -156,7 +161,7 @@ void Widget::setPixmap(const QString& path)
     pixRect.setSize(pixmap.size() * scaleSize);
     pixRect.moveCenter(this->rect().center());
 
-    if (QFileInfo(path).completeSuffix().toLower() == "gif") { //.gif
+    if (QFileInfo(path).suffix().toLower() == "gif") { //.gif
         isGif = true;
         static QMovie* movie = nullptr; //delete nullptr SAFE
         delete movie; //label does NOT take ownership 需要手动delete(如果多次加载gif的话)
@@ -168,7 +173,7 @@ void Widget::setPixmap(const QString& path)
         toShow = applyEffectToPixmap(pixmap.scaled(pixRect.size()), createShadowEffect(Shadow_R), Shadow_R);
     }
 
-    ui->btn_info->setToolTip(QFileInfo(path).fileName() + " [Click to Open]");
+    ui->btn_info->setToolTip(path + " [Click to Open]");
 
     updateThumbnailPixmap(); //通知DWM缩略图失效，下次需要缩略图时(鼠标移至任务栏图标，而非立即)会重新获取
     updateAll();
@@ -266,6 +271,11 @@ QString Widget::getDirPath(const QString& filePath)
     return QFileInfo(filePath).absoluteDir().absolutePath();
 }
 
+QString Widget::getFileName(const QString& filePath)
+{
+    return QFileInfo(filePath).fileName();
+}
+
 int Widget::switchPixmap(int i)
 {
     const int N = fileList.size();
@@ -282,7 +292,7 @@ void Widget::mousePressEvent(QMouseEvent* event)
     if (event->button() == Qt::LeftButton)
         canMovePix = true;
     else if (event->button() == Qt::RightButton) { //延迟触发：长按为Menu 短按为quit
-        QTimer::singleShot(120, [=]() { ui->circleMenu->setStartPos(curPos); });
+        QTimer::singleShot(MenuDelay, [=]() { ui->circleMenu->setStartPos(curPos); });
     }
 }
 

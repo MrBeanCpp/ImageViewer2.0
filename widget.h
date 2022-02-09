@@ -40,6 +40,7 @@ public:
     void updateThumbnailPixmap(void);
     QStringList getFileList(QString dir, const QStringList& filter);
     QString getDirPath(const QString& filePath);
+    QString getFileName(const QString& filePath);
     int switchPixmap(int i); //在文件夹中切换图片(fileList)
 
 private:
@@ -54,6 +55,7 @@ private:
     const QPair<int, int> pixelRange { (int)1e3, (int)1e8 };
     const int Shadow_P_Limit = 1.5e6;
     const int Shadow_R = 15;
+    const int MenuDelay = 150; //ms
     bool isShadowDrop = true;
     const QString defaultImage = R"(E:\图片(New)\表情包\男子高中生的日常.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
     QString ImagePath;
