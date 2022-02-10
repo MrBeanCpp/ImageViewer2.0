@@ -24,6 +24,8 @@ public:
 
     bool isOnPixmap(const QPoint& curPos);
     bool isInPixelRange(int pixels);
+    bool isInPixelRange(const QSize& size);
+    QPixmap getScaledPixmap(const QPixmap& oriPix, qreal scale, bool hasShadow, Qt::TransformationMode transformMode = Qt::FastTransformation);
     void scalePixmap(qreal scale, const QPoint& center = QPoint()); //缩放中心
     void updateInfo(void);
     void adjustBtnPos(void);
@@ -42,6 +44,9 @@ public:
     QString getDirPath(const QString& filePath);
     QString getFileName(const QString& filePath);
     int switchPixmap(int i); //在文件夹中切换图片(fileList)
+
+signals:
+    void updateSmoothPixmap(QPixmap smoothPixmap, qreal scale);
 
 private:
     Ui::Widget* ui;

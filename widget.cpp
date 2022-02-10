@@ -4,9 +4,11 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QMouseEvent>
+//#include <QMutex>
 #include <QPainter>
 #include <QScreen>
 #include <QTimer>
+#include <QtConcurrent>
 #include <QtWinExtras>
 Widget::Widget(QWidget* parent)
     : QWidget(parent)
@@ -20,7 +22,6 @@ Widget::Widget(QWidget* parent)
     setWindowTitle("ImageViewer2.0");
     this->setFocusPolicy(Qt::StrongFocus);
     move(0, 0);
-    ui->label_image->setScaledContents(true);
     //showFullScreen();
     //setWindowState(Qt::WindowMaximized); //对无边框窗口无效
     setFixedSize(screen->geometry().size() - QSize(0, 1)); //留1px 便于触发任务栏（自动隐藏）
@@ -53,6 +54,13 @@ Widget::Widget(QWidget* parent)
         ShellExecuteW(NULL, L"open", L"explorer", QString("/select, \"%1\"").arg(QDir::toNativeSeparators(ImagePath)).toStdWString().c_str(), NULL, SW_SHOW);
     });
 
+    connect(
+        this, &Widget::updateSmoothPixmap, this, [=](const QPixmap& smoothPix, qreal scale) {
+            if (scale != scaleSize) return; //[此处而非子线程] 判断更准确(更接近setPixmap)
+            ui->label_image->setPixmap(toShow = smoothPix); //多线程or非GUI访问出错(有互斥锁貌似也不行) // & 大图片耗时大概20ms
+        },
+        Qt::QueuedConnection); //多线程（重要）
+
     QStringList args = qApp->arguments();
     ImagePath = args.size() > 1 ? args.at(1) : defaultImage;
 
@@ -79,19 +87,36 @@ bool Widget::isInPixelRange(int pixels)
     return pixels >= pixelRange.first && pixels <= pixelRange.second;
 }
 
+bool Widget::isInPixelRange(const QSize& size)
+{
+    const int pixels = size.width() * size.height();
+    return isInPixelRange(pixels);
+}
+
+QPixmap Widget::getScaledPixmap(const QPixmap& oriPix, qreal scale, bool hasShadow, Qt::TransformationMode transformMode)
+{
+    QSize newSize = oriPix.size() * scale;
+    QPixmap resPix = pixmap.scaled(newSize, Qt::IgnoreAspectRatio, transformMode); //Qt::KeepAspectRatio效率较差
+    if (hasShadow) resPix = applyEffectToPixmap(resPix, createShadowEffect(Shadow_R), Shadow_R);
+    return resPix;
+}
+
 void Widget::scalePixmap(qreal scale, const QPoint& center)
 {
     QSize newSize = pixmap.size() * scale;
-    int pixels = newSize.width() * newSize.height();
+    const int pixels = newSize.width() * newSize.height();
     if (isInPixelRange(pixels)) { //限制像素范围，使用长宽不太准确
         QPoint oldCurPos = center - pixRect.topLeft(); //relative
         QPoint newCurPos = oldCurPos * (scale / scaleSize);
-        toShow = pixmap.scaled(newSize); //其实缩放toShow & shadow对Gif没必要 但懒得改old code了(反正没啥影响d(´ω｀*))
-        if (pixels <= Shadow_P_Limit) { //究极优化（图片太大 计算阴影卡顿）
-            toShow = applyEffectToPixmap(toShow, createShadowEffect(Shadow_R), Shadow_R);
-            isShadowDrop = true;
-        } else
-            isShadowDrop = false;
+
+        isShadowDrop = (pixels <= Shadow_P_Limit); //究极优化（图片太大 计算阴影卡顿）
+        if (!isGif) { //非Gif 计算pixmap
+            toShow = getScaledPixmap(pixmap, scale, isShadowDrop);
+            QtConcurrent::run([=]() { //多线程获取平滑图像，但是对于GUI的操作还得在GUI线程完成，所以emit signal
+                QPixmap smoothPix = getScaledPixmap(pixmap, scale, isShadowDrop, Qt::SmoothTransformation);
+                emit updateSmoothPixmap(smoothPix, scale);
+            });
+        }
         pixRect.translate(oldCurPos - newCurPos);
         pixRect.setSize(newSize);
         scaleSize = scale;
@@ -141,7 +166,7 @@ QPixmap Widget::applyEffectToPixmap(const QPixmap& pixmap, QGraphicsEffect* effe
 
 QGraphicsDropShadowEffect* Widget::createShadowEffect(int radius, const QPoint& offset, const QColor& color)
 {
-    QGraphicsDropShadowEffect* effect = new QGraphicsDropShadowEffect(this);
+    QGraphicsDropShadowEffect* effect = new QGraphicsDropShadowEffect(); //不能写parent == this 否则不能多线程//QObject: Cannot create children for a parent that is in a different thread.
     effect->setBlurRadius(radius);
     effect->setColor(color);
     effect->setOffset(offset);
@@ -170,8 +195,9 @@ void Widget::setPixmap(const QString& path)
         movie->start();
     } else {
         isGif = false;
-        toShow = applyEffectToPixmap(pixmap.scaled(pixRect.size()), createShadowEffect(Shadow_R), Shadow_R);
+        toShow = getScaledPixmap(pixmap, scaleSize, true, Qt::SmoothTransformation);
     }
+    ui->label_image->setScaledContents(isGif); //效率低//只在Gif时开启
 
     ui->btn_info->setToolTip(path + " [Click to Open]");
 
@@ -184,9 +210,9 @@ void Widget::updateAll()
     updateInfo();
     adjustBtnPos();
 
-    if (isGif)
+    if (isGif) {
         ui->label_image->setGeometry(pixRect);
-    else {
+    } else {
         ui->label_image->setGeometry(getShadowRect(pixRect, Shadow_R));
         ui->label_image->setPixmap(toShow); //只是个载体
     }

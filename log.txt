@@ -52,3 +52,10 @@
 
 11. 新增Gif支持：
     只改了updateAll & setPixmap
+
+12.
+    movie->setScaledSize(pixRect.size());//缩放延迟
+    遂还是采用 QLabel->scaleContents()//但是这玩意儿 会影响setPixmap效率 所以只在isGif开启
+
+    &GUI部件，如ui->label->setPixmap不能在非GUI线程使用，会出问题（特别是多线程），最好发射信号 在GUI线程处理//采用 Qt::QueuedConnection connect
+    注：如果多线程多次执行某操作耗时巨长，可以检测自己是否是最后一个(唯一一个线程)，如果是才执行 来减轻负担（也就是同时多次处理合并）
