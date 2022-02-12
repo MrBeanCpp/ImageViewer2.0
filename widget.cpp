@@ -68,7 +68,8 @@ Widget::Widget(QWidget* parent)
     fileList = getFileList(ImagePath, QStringList() << "*.png"
                                                     << "*.jpg"
                                                     << "*.bmp"
-                                                    << "*.gif");
+                                                    << "*.gif"
+                                                    << "*.jpeg");
     index = fileList.indexOf(getFileName(ImagePath));
 }
 
@@ -111,11 +112,11 @@ void Widget::scalePixmap(qreal scale, const QPoint& center)
 
         isShadowDrop = (pixels <= Shadow_P_Limit); //究极优化（图片太大 计算阴影卡顿）
         if (!isGif) { //非Gif 计算pixmap
-            toShow = getScaledPixmap(pixmap, scale, isShadowDrop);
             QtConcurrent::run([=]() { //多线程获取平滑图像，但是对于GUI的操作还得在GUI线程完成，所以emit signal
                 QPixmap smoothPix = getScaledPixmap(pixmap, scale, isShadowDrop, Qt::SmoothTransformation);
                 emit updateSmoothPixmap(smoothPix, scale);
-            });
+            }); //开启子线程 GUI线程耗时0ms 这句在前
+            toShow = getScaledPixmap(pixmap, scale, isShadowDrop); //大图耗时100-200ms
         }
         pixRect.translate(oldCurPos - newCurPos);
         pixRect.setSize(newSize);

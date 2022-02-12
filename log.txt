@@ -59,3 +59,7 @@
 
     &GUI部件，如ui->label->setPixmap不能在非GUI线程使用，会出问题（特别是多线程），最好发射信号 在GUI线程处理//采用 Qt::QueuedConnection connect
     注：如果多线程多次执行某操作耗时巨长，可以检测自己是否是最后一个(唯一一个线程)，如果是才执行 来减轻负担（也就是同时多次处理合并）
+
+13.自动设置文件关联失败 存在众多键值 UserChoice优先级最高 但有hash值无法计算(建议手动右键设置关联)
+
+14.QtConcurrent::run()开启子线程写在前(GUI thread 0ms) 可以更好的并行计算，提升效率
