@@ -56,10 +56,19 @@ Widget::Widget(QWidget* parent)
 
     connect(
         this, &Widget::updateSmoothPixmap, this, [=](const QPixmap& smoothPix, qreal scale) {
-            if (scale != scaleSize) return; //[此处而非子线程] 判断更准确(更接近setPixmap)
+            if (scale != this->scaleSize) return; //[写在此处而非子线程] 判断更准确(更接近setPixmap)
             ui->label_image->setPixmap(toShow = smoothPix); //多线程or非GUI访问出错(有互斥锁貌似也不行) // & 大图片耗时大概20ms
         },
         Qt::QueuedConnection); //多线程（重要）
+
+    connect(
+        this, &Widget::updateRealSizePixmap, this, [=](const QPixmap& realPix, qreal scale, const QString& path) {
+            if (path != this->ImagePath) return; //若已切换图片 则作废
+            qDebug() << "updateRealSizePixmap";
+            toShow = getScaledPixmap(pixmap = realPix, scaleSize *= scale, isShadowDrop, Qt::SmoothTransformation); //注意scaleSize更新
+            updateAll();
+        },
+        Qt::QueuedConnection);
 
     QStringList args = qApp->arguments();
     ImagePath = args.size() > 1 ? args.at(1) : defaultImage;
@@ -83,6 +92,11 @@ bool Widget::isOnPixmap(const QPoint& curPos)
     return pixRect.contains(curPos);
 }
 
+int Widget::getPixels(const QSize& size)
+{
+    return size.width() * size.height();
+}
+
 bool Widget::isInPixelRange(int pixels)
 {
     return pixels >= pixelRange.first && pixels <= pixelRange.second;
@@ -90,14 +104,13 @@ bool Widget::isInPixelRange(int pixels)
 
 bool Widget::isInPixelRange(const QSize& size)
 {
-    const int pixels = size.width() * size.height();
-    return isInPixelRange(pixels);
+    return isInPixelRange(getPixels(size));
 }
 
 QPixmap Widget::getScaledPixmap(const QPixmap& oriPix, qreal scale, bool hasShadow, Qt::TransformationMode transformMode)
 {
-    QSize newSize = oriPix.size() * scale;
-    QPixmap resPix = pixmap.scaled(newSize, Qt::IgnoreAspectRatio, transformMode); //Qt::KeepAspectRatio效率较差
+    QSize newSize = oriPix.size() * scale; //↓ 1.0优化
+    QPixmap resPix = qFuzzyCompare(scale, 1.0) ? oriPix : oriPix.scaled(newSize, Qt::IgnoreAspectRatio, transformMode); //Qt::KeepAspectRatio效率较差
     if (hasShadow) resPix = applyEffectToPixmap(resPix, createShadowEffect(Shadow_R), Shadow_R);
     return resPix;
 }
@@ -105,12 +118,11 @@ QPixmap Widget::getScaledPixmap(const QPixmap& oriPix, qreal scale, bool hasShad
 void Widget::scalePixmap(qreal scale, const QPoint& center)
 {
     QSize newSize = pixmap.size() * scale;
-    const int pixels = newSize.width() * newSize.height();
-    if (isInPixelRange(pixels)) { //限制像素范围，使用长宽不太准确
+    if (isInPixelRange(newSize)) { //限制像素范围，使用长宽不太准确
         QPoint oldCurPos = center - pixRect.topLeft(); //relative
         QPoint newCurPos = oldCurPos * (scale / scaleSize);
 
-        isShadowDrop = (pixels <= Shadow_P_Limit); //究极优化（图片太大 计算阴影卡顿）
+        isShadowDrop = (getPixels(newSize) <= Shadow_P_Limit); //究极优化（图片太大 计算阴影卡顿）
         if (!isGif) { //非Gif 计算pixmap
             QtConcurrent::run([=]() { //多线程获取平滑图像，但是对于GUI的操作还得在GUI线程完成，所以emit signal
                 QPixmap smoothPix = getScaledPixmap(pixmap, scale, isShadowDrop, Qt::SmoothTransformation);
@@ -177,30 +189,45 @@ QGraphicsDropShadowEffect* Widget::createShadowEffect(int radius, const QPoint& 
 void Widget::setPixmap(const QString& path)
 {
     ImagePath = path;
-    pixmap = QPixmap(path); //如果是.gif则是第一帧图像
-    if (pixmap.isNull()) {
+    QImageReader reader(path);
+    if (reader.canRead() == false) {
         QMessageBox::warning(this, "Warning", "Error File Path!\n错误文件路径\n間違えたファイルパス");
         QTimer::singleShot(0, [=]() { qApp->quit(); }); //需要进入事件循环后触发
         return;
     }
-    scaleSize = qMin(scaleToScreen(pixmap), 1.0); //缩放到能完全显示
-    pixRect.setSize(pixmap.size() * scaleSize);
-    pixRect.moveCenter(this->rect().center());
+    isGif = (QFileInfo(path).suffix().toLower() == "gif"); //or reader.imageCount()>1
 
-    if (QFileInfo(path).suffix().toLower() == "gif") { //.gif
-        isGif = true;
+    QSize realSize = reader.size(); //without Much I/O
+    qreal realScale = qMin(scaleToScreen(realSize), 1.0); //缩放到能完全显示
+    QSize fitSize = realSize * realScale;
+    reader.setScaledSize(fitSize);
+    scaleSize = 1.0;
+
+    if (!isGif && !qFuzzyCompare(realScale, scaleSize)) //realScale != scaleSize(1.0)意味着图片经过缩放（大于屏幕）
+        QtConcurrent::run([=]() { //多线程加载真实大小图片
+            updateRealSizePixmap(QPixmap(path), realScale, path);
+        });
+
+    QElapsedTimer t;
+    t.start();
+    pixmap = QPixmap::fromImageReader(&reader); //如果是.gif则是第一帧图像
+    qDebug() << "Load:" << t.elapsed() << "ms";
+
+    if (isGif) { //.gif
         static QMovie* movie = nullptr; //delete nullptr SAFE
         delete movie; //label does NOT take ownership 需要手动delete(如果多次加载gif的话)
         movie = new QMovie(path, QByteArray(), this);
         ui->label_image->setMovie(movie);
         movie->start();
     } else {
-        isGif = false;
-        toShow = getScaledPixmap(pixmap, scaleSize, true, Qt::SmoothTransformation);
+        toShow = getScaledPixmap(pixmap, scaleSize, isShadowDrop = (getPixels(fitSize) <= Shadow_P_Limit), Qt::SmoothTransformation);
     }
-    ui->label_image->setScaledContents(isGif); //效率低//只在Gif时开启
 
-    ui->btn_info->setToolTip(path + " [Click to Open]");
+    ui->label_image->setScaledContents(isGif); //效率低//只在Gif时开启
+    ui->btn_info->setToolTip(QDir::toNativeSeparators(path) + " [Click to Open]");
+
+    pixRect.setSize(fitSize);
+    pixRect.moveCenter(this->rect().center());
 
     updateThumbnailPixmap(); //通知DWM缩略图失效，下次需要缩略图时(鼠标移至任务栏图标，而非立即)会重新获取
     updateAll();
@@ -219,14 +246,17 @@ void Widget::updateAll()
     }
 }
 
-qreal Widget::scaleToScreen(const QPixmap& pixmap)
+qreal Widget::scaleToScreen(const QSize& pixSize)
 {
     const QSize sSize = screen->size();
-    const QSize pixSize = pixmap.size();
-    //if (sSize.width() > pixSize.width() && sSize.height() > pixSize.height()) return 1.0;
     qreal sW = (qreal)sSize.width() / pixSize.width();
     qreal sH = (qreal)sSize.height() / pixSize.height();
     return qMin(sW, sH);
+}
+
+qreal Widget::scaleToScreen(const QPixmap& pixmap)
+{
+    return scaleToScreen(pixmap.size());
 }
 
 QRect Widget::getShadowRect(const QRect& rect, int Shadow_R)

@@ -23,6 +23,7 @@ public:
     ~Widget();
 
     bool isOnPixmap(const QPoint& curPos);
+    int getPixels(const QSize& size);
     bool isInPixelRange(int pixels);
     bool isInPixelRange(const QSize& size);
     QPixmap getScaledPixmap(const QPixmap& oriPix, qreal scale, bool hasShadow, Qt::TransformationMode transformMode = Qt::FastTransformation);
@@ -34,6 +35,7 @@ public:
     QGraphicsDropShadowEffect* createShadowEffect(int radius, const QPoint& offset = QPoint(0, 0), const QColor& color = QColor(20, 20, 20));
     void setPixmap(const QString& path);
     void updateAll(void);
+    qreal scaleToScreen(const QSize& pixSize);
     qreal scaleToScreen(const QPixmap& pixmap);
     QRect getShadowRect(const QRect& rect, int Shadow_R);
     void setCircleMenuActions(void);
@@ -47,6 +49,7 @@ public:
 
 signals:
     void updateSmoothPixmap(QPixmap smoothPixmap, qreal scale);
+    void updateRealSizePixmap(QPixmap realPixmap, qreal scale, QString path);
 
 private:
     Ui::Widget* ui;
@@ -56,13 +59,14 @@ private:
     bool canMovePix = false;
     QPixmap pixmap; //原始图像
     QPixmap toShow; //缩放的图像(实际显示)
-    qreal scaleSize = 1.0;
+    qreal scaleSize = 1.0; //取名鬼才，很容易让人误以为是size的好吧
     const QPair<int, int> pixelRange { (int)1e3, (int)1e8 };
     const int Shadow_P_Limit = 1.5e6;
     const int Shadow_R = 15;
     const int MenuDelay = 150; //ms
     bool isShadowDrop = true;
-    const QString defaultImage = R"(E:\图片(New)\表情包\男子高中生的日常.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
+    const QString defaultImage = R"(E:\图片(New)\声卡.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
+    //E:\图片(New)\表情包\男子高中生的日常.png//E:\图片(New)\声卡.png
     QString ImagePath;
     QScreen* screen;
     WinThumbnailToolBar* thumbbar = nullptr;
