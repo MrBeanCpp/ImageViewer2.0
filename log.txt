@@ -65,3 +65,9 @@
 14.QtConcurrent::run()开启子线程写在前(GUI thread 0ms) 可以更好的并行计算，提升效率
 
 15.使用多线程加载图片with QImageReader 优化加载速度
+
+16.尝试文件关联再次失败
+
+17.在文件夹边缘切换图片 不再重新加载
+    多线程加载fileList
+    Ctrl+滚轮切换图片

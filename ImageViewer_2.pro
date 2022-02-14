@@ -31,7 +31,7 @@ FORMS += \
     circlemenu.ui \
     widget.ui
 
-LIBS += -lDwmapi -lGdi32
+LIBS += -lDwmapi -lGdi32 -lShlwapi
 
 RC_ICONS = images/ICON.ico
 

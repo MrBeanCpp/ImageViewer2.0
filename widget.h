@@ -75,6 +75,9 @@ private:
     int index = -1;
     bool isGif = false;
 
+public:
+    static QStringList Filter;
+
     // QWidget interface
 protected:
     void mousePressEvent(QMouseEvent* event) override;

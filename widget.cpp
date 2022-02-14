@@ -10,6 +10,9 @@
 #include <QTimer>
 #include <QtConcurrent>
 #include <QtWinExtras>
+
+QStringList Widget::Filter = { "*.png", "*.jpg", "*.bmp", "*.gif", "*.jpeg" };
+
 Widget::Widget(QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
@@ -73,13 +76,13 @@ Widget::Widget(QWidget* parent)
     QStringList args = qApp->arguments();
     ImagePath = args.size() > 1 ? args.at(1) : defaultImage;
 
+    QtConcurrent::run([=]() { //多线程加载文件夹图片列表
+        fileList = getFileList(ImagePath, Filter);
+        index = fileList.indexOf(getFileName(ImagePath));
+        qDebug() << "fileList Loaded"; //100 files 5ms
+    });
+
     setPixmap(ImagePath);
-    fileList = getFileList(ImagePath, QStringList() << "*.png"
-                                                    << "*.jpg"
-                                                    << "*.bmp"
-                                                    << "*.gif"
-                                                    << "*.jpeg");
-    index = fileList.indexOf(getFileName(ImagePath));
 }
 
 Widget::~Widget()
@@ -335,9 +338,12 @@ QString Widget::getFileName(const QString& filePath)
 
 int Widget::switchPixmap(int i)
 {
+    if (fileList.isEmpty()) return -1;
+
     const int N = fileList.size();
-    index = qBound(0, i, N - 1);
-    QString filePath = curDirPath + '/' + fileList[index];
+    int newIndex = qBound(0, i, N - 1);
+    if (newIndex == index) return index; //相同不加载
+    QString filePath = curDirPath + '/' + fileList[index = newIndex];
     setPixmap(filePath);
     return index;
 }
@@ -420,8 +426,12 @@ void Widget::keyReleaseEvent(QKeyEvent* event)
 
 void Widget::wheelEvent(QWheelEvent* event)
 {
-    qreal scale = event->delta() > 0 ? scaleSize * 1.1 : scaleSize / 1.1; //观察微软原生Photo得出结论
-    scalePixmap(scale, event->pos());
+    if (event->modifiers() & Qt::ControlModifier) { //Ctrl+滚轮切换图片
+        switchPixmap(event->delta() > 0 ? index - 1 : index + 1);
+    } else {
+        qreal scale = event->delta() > 0 ? scaleSize * 1.1 : scaleSize / 1.1; //观察微软原生Photo得出结论
+        scalePixmap(scale, event->pos());
+    }
 }
 
 void Widget::focusInEvent(QFocusEvent* event)
