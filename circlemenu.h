@@ -34,8 +34,8 @@ private:
     QPoint startPos, endPos;
     bool startMenu = false;
     int highLight = -1;
-    const int radius = 75;
-    const int safeRadius = 25;
+    int radius = 75;
+    int safeRadius = 25;
     QList<QPair<QString, std::function<void(void)>>> itemList; //"适应屏幕", "退出", "Bomb", "shutdown", "Noooooooo"
     QList<QRect> btns;
     QFont font { "微软雅黑", 9 };

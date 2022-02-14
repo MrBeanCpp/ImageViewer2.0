@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QKeyEvent>
 #include <QPainter>
+#include <QScreen>
 #include <QtMath>
 CircleMenu::CircleMenu(QWidget *parent) :
     QWidget(parent),
@@ -10,6 +11,12 @@ CircleMenu::CircleMenu(QWidget *parent) :
 {
     ui->setupUi(this);
     hide();
+
+    QScreen* screen = qApp->screens().at(0);
+    int height = screen->size().height();
+    qreal DPIscale = 1.0 * height / 1080; //1080p //高DPI适配
+    radius *= DPIscale;
+    safeRadius *= DPIscale;
 
     //appendAction("Text", [=]() { qDebug() << "Test"; });
     //appendAction("Text2", [=]() { qDebug() << "Test2"; });
