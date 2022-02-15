@@ -23,5 +23,6 @@
 #### 运行截图
 
 ![输入图片说明](images/%E5%85%A8%E5%B1%8F%E6%88%AA%E5%9B%BE1.png)
+![输入图片说明](images/%E8%BF%90%E8%A1%8C%E6%88%AA%E5%9B%BE2.png)
 ![输入图片说明](images/%E5%8F%B3%E9%94%AE%E8%8F%9C%E5%8D%95.png)
 ![输入图片说明](images/%E5%B7%A6%E4%B8%8A%E8%A7%92%E5%8F%82%E6%95%B0%E4%BF%A1%E6%81%AF.png)
