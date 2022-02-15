@@ -1,17 +1,15 @@
 # ImageViewer2.0
 
 #### 介绍
-旨在以最简洁、轻量的方式呈现图像
-
-#### 软件架构
-软件架构说明
+旨在以最简洁、轻量的方式呈现图像  
+特色： **专注显示图像 透明化任何无用的边框以及背景** 
 
 
 #### 安装教程
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+1.  解压 双击exe文件（初次运行建立注册表文件关联）（会报错但没事）
+2.  右键Test_Image文件夹中的五张图片(对应5种支持的图片格式)，->打开方式，将本程序设置为默认应用
+3.  此后双击图片 即可运行本程序
 
 #### 使用说明
 
@@ -22,19 +20,8 @@
 - `ESC` || `右键`(短按) 退出
 - `右键`(长按)弹出菜单 放开右键选择
 
-#### 参与贡献
+#### 运行截图
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+![输入图片说明](images/%E5%85%A8%E5%B1%8F%E6%88%AA%E5%9B%BE1.png)
+![输入图片说明](images/%E5%8F%B3%E9%94%AE%E8%8F%9C%E5%8D%95.png)
+![输入图片说明](images/%E5%B7%A6%E4%B8%8A%E8%A7%92%E5%8F%82%E6%95%B0%E4%BF%A1%E6%81%AF.png)
