@@ -30,7 +30,7 @@
    </property>
    <property name="styleSheet">
     <string notr="true">QLabel{
-	background-color: rgba(110,110,110,230);
+	background-color: rgba(100,100,100,220);
 	color:white;
 	border:1px solid black;
 }</string>
@@ -196,10 +196,36 @@ QPushButton:pressed{
     <string>Image</string>
    </property>
   </widget>
+  <widget class="QLabel" name="label_version">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>316</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>微软雅黑</family>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QLabel{
+	background-color: rgba(110,110,110,100);
+	color:rgb(225,225,225);
+	/*border:1px solid black;*/
+}</string>
+   </property>
+   <property name="text">
+    <string>TextLabel</string>
+   </property>
+  </widget>
   <zorder>label_image</zorder>
   <zorder>label_info</zorder>
   <zorder>Btns</zorder>
   <zorder>circleMenu</zorder>
+  <zorder>label_version</zorder>
  </widget>
  <customwidgets>
   <customwidget>

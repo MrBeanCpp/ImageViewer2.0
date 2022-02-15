@@ -44,6 +44,13 @@ Widget::Widget(QWidget* parent)
     ui->btn_info->setFocusProxy(this); //委托焦点，防止点击按钮 label焦点丢失
     ui->btn_pin->setFocusProxy(this);
 
+    ui->label_version->setText(QString("  Version: [%1]  by MrBeanC  ").arg(Version));
+    ui->label_version->adjustSize();
+    QRect verRect = ui->label_version->geometry();
+    verRect.moveBottomRight(this->geometry().bottomRight());
+    ui->label_version->setGeometry(verRect);
+    ui->label_version->hide();
+
     connect(ui->btn_pin, &QPushButton::clicked, [=](bool checked) { //前置
         SetWindowPos(HWND(winId()), checked ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
         setIcon(ui->btn_pin, checked ? "pin_on" : "pin_off");
@@ -72,6 +79,17 @@ Widget::Widget(QWidget* parent)
             updateAll();
         },
         Qt::QueuedConnection);
+
+    connect(this, &Widget::menuRequested, [=]() {
+        isMenuRequested = true;
+        ui->circleMenu->setStartPos(curPos);
+        ui->label_version->show();
+    });
+    connect(this, &Widget::menuCloseRequested, [=]() {
+        isMenuRequested = false;
+        ui->circleMenu->release();
+        ui->label_version->hide();
+    });
 
     QStringList args = qApp->arguments();
     ImagePath = args.size() > 1 ? args.at(1) : defaultImage;
@@ -348,6 +366,11 @@ int Widget::switchPixmap(int i)
     return index;
 }
 
+int Widget::switchPixmap(Widget::SwitchPix dir)
+{
+    return switchPixmap(dir == PRE ? index - 1 : index + 1);
+}
+
 void Widget::mousePressEvent(QMouseEvent* event)
 {
     curPos = event->globalPos();
@@ -355,7 +378,7 @@ void Widget::mousePressEvent(QMouseEvent* event)
     if (event->button() == Qt::LeftButton)
         canMovePix = true;
     else if (event->button() == Qt::RightButton) { //延迟触发：长按为Menu 短按为quit
-        QTimer::singleShot(MenuDelay, [=]() { ui->circleMenu->setStartPos(curPos); });
+        QTimer::singleShot(MenuDelay, this, &Widget::menuRequested);
     }
 }
 
@@ -365,16 +388,16 @@ void Widget::mouseReleaseEvent(QMouseEvent* event)
     auto button = event->button();
 
     if (button == Qt::RightButton) {
-        if (ui->circleMenu->isVisible()) //延迟触发：长按为Menu 短按为quit
-            ui->circleMenu->release();
+        if (isMenuRequested) //延迟触发：长按为Menu 短按为quit
+            emit menuCloseRequested();
         else
             qApp->quit();
     } else if (button == Qt::LeftButton)
         canMovePix = false;
     else if (button == Qt::BackButton) //鼠标侧键
-        switchPixmap(index + 1);
+        switchPixmap(NEXT);
     else if (button == Qt::ForwardButton) //鼠标侧键
-        switchPixmap(index - 1);
+        switchPixmap(PRE);
 }
 
 void Widget::mouseMoveEvent(QMouseEvent* event) //破案了 透明窗体 会让mouseMoveEvent卡顿（与其Size有关）//通过设置窗口Mask的方法解决(减少面积)
@@ -395,10 +418,10 @@ void Widget::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key()) {
     case Qt::Key_Left:
-        switchPixmap(index - 1);
+        switchPixmap(PRE);
         break;
     case Qt::Key_Right:
-        switchPixmap(index + 1);
+        switchPixmap(NEXT);
         break;
     default:
         break;
@@ -427,7 +450,7 @@ void Widget::keyReleaseEvent(QKeyEvent* event)
 void Widget::wheelEvent(QWheelEvent* event)
 {
     if (event->modifiers() & Qt::ControlModifier) { //Ctrl+滚轮切换图片
-        switchPixmap(event->delta() > 0 ? index - 1 : index + 1);
+        switchPixmap(event->delta() > 0 ? PRE : NEXT);
     } else {
         qreal scale = event->delta() > 0 ? scaleSize * 1.1 : scaleSize / 1.1; //观察微软原生Photo得出结论
         scalePixmap(scale, event->pos());

@@ -19,6 +19,12 @@ class Widget : public QWidget {
     Q_OBJECT
 
 public:
+    enum SwitchPix {
+        PRE,
+        NEXT
+    };
+
+public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
 
@@ -46,13 +52,19 @@ public:
     QString getDirPath(const QString& filePath);
     QString getFileName(const QString& filePath);
     int switchPixmap(int i); //在文件夹中切换图片(fileList)
+    int switchPixmap(SwitchPix dir);
 
 signals:
     void updateSmoothPixmap(QPixmap smoothPixmap, qreal scale);
     void updateRealSizePixmap(QPixmap realPixmap, qreal scale, QString path);
 
+    void menuRequested(void);
+    void menuCloseRequested(void);
+
 private:
     Ui::Widget* ui;
+
+    const QString Version = "1.0.1";
 
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;
@@ -65,7 +77,7 @@ private:
     const int Shadow_R = 15;
     const int MenuDelay = 150; //ms
     bool isShadowDrop = true;
-    const QString defaultImage = R"(E:\图片(New)\声卡.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
+    const QString defaultImage = R"(E:\图片(New)\表情包\男子高中生的日常.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
     //E:\图片(New)\表情包\男子高中生的日常.png//E:\图片(New)\声卡.png
     QString ImagePath;
     QScreen* screen;
@@ -74,6 +86,7 @@ private:
     QString curDirPath;
     int index = -1;
     bool isGif = false;
+    bool isMenuRequested = false;
 
 public:
     static QStringList Filter;

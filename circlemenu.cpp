@@ -13,10 +13,11 @@ CircleMenu::CircleMenu(QWidget *parent) :
     hide();
 
     QScreen* screen = qApp->screens().at(0);
-    int height = screen->size().height();
-    qreal DPIscale = 1.0 * height / 1080; //1080p //高DPI适配
+    int len = qMin(screen->size().width(), screen->size().height()); //取短边 防止竖屏
+    qreal DPIscale = 1.0 * len / 1080; //1080p //高DPI适配
     radius *= DPIscale;
     safeRadius *= DPIscale;
+    maskSize *= DPIscale;
 
     //appendAction("Text", [=]() { qDebug() << "Test"; });
     //appendAction("Text2", [=]() { qDebug() << "Test2"; });
@@ -32,7 +33,7 @@ void CircleMenu::setStartPos(const QPoint& pos)
     endPos = startPos = pos - this->pos();
     calcBtnRects(); //重新计算位置
 
-    QRect Mask(QPoint(), QSize(400, 400));
+    QRect Mask(QPoint(), maskSize);
     Mask.moveCenter(startPos);
     setMask(Mask); //减少CPU压力
 

@@ -36,6 +36,7 @@ private:
     int highLight = -1;
     int radius = 75;
     int safeRadius = 25;
+    QSize maskSize = { 400, 400 };
     QList<QPair<QString, std::function<void(void)>>> itemList; //"适应屏幕", "退出", "Bomb", "shutdown", "Noooooooo"
     QList<QRect> btns;
     QFont font { "微软雅黑", 9 };
