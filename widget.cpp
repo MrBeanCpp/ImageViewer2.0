@@ -47,7 +47,7 @@ Widget::Widget(QWidget* parent)
     ui->label_version->setText(QString("  Version: [%1]  by MrBeanC  ").arg(Version));
     ui->label_version->adjustSize();
     QRect verRect = ui->label_version->geometry();
-    verRect.moveBottomRight(this->geometry().bottomRight());
+    verRect.moveBottomRight(screen->availableGeometry().bottomRight());
     ui->label_version->setGeometry(verRect);
     ui->label_version->hide();
 

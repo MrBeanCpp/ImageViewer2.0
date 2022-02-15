@@ -64,7 +64,7 @@ signals:
 private:
     Ui::Widget* ui;
 
-    const QString Version = "1.0.1";
+    const QString Version = "1.0.2";
 
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;

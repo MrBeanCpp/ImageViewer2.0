@@ -77,3 +77,5 @@
 18.引入枚举值 增加switchPixmap可读性
     增加signal 请求&关闭Menu 增加可读性 & 拓展性
     增加版本信息（同菜单一同呼出(右下角)）
+
+19.检测TaskBar 修复了Version信息被TaskBar遮挡的问题
