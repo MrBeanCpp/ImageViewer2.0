@@ -53,6 +53,7 @@ public:
     QString getFileName(const QString& filePath);
     int switchPixmap(int i); //在文件夹中切换图片(fileList)
     int switchPixmap(SwitchPix dir);
+    void rotateClockwise(void);
 
 signals:
     void updateSmoothPixmap(QPixmap smoothPixmap, qreal scale);
@@ -64,7 +65,7 @@ signals:
 private:
     Ui::Widget* ui;
 
-    const QString Version = "1.0.2";
+    const QString Version = "1.1.0";
 
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;

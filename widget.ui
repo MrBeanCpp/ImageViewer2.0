@@ -47,7 +47,7 @@
     <rect>
      <x>160</x>
      <y>240</y>
-     <width>61</width>
+     <width>91</width>
      <height>39</height>
     </rect>
    </property>
@@ -152,6 +152,53 @@ QPushButton:pressed{
       <property name="icon">
        <iconset resource="res.qrc">
         <normaloff>:/images/pin_off.ico</normaloff>:/images/pin_off.ico</iconset>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btn_rotate">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>21</width>
+        <height>21</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <family>Consolas</family>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;旋转&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton{
+	background-color:rgba(180,180,180,100);
+	border-style:flat;
+	border-radius:5px;
+}
+QPushButton:hover{
+	background-color:rgba(180,180,180,200);
+}
+QPushButton:pressed{
+	background-color:rgba(150,150,150,100);
+}</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="icon">
+       <iconset resource="res.qrc">
+        <normaloff>:/images/rotate.png</normaloff>:/images/rotate.png</iconset>
       </property>
       <property name="checkable">
        <bool>true</bool>

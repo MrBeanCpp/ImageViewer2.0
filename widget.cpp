@@ -64,6 +64,11 @@ Widget::Widget(QWidget* parent)
         ShellExecuteW(NULL, L"open", L"explorer", QString("/select, \"%1\"").arg(QDir::toNativeSeparators(ImagePath)).toStdWString().c_str(), NULL, SW_SHOW);
     });
 
+    connect(ui->btn_rotate, &QPushButton::clicked, [=]() { //旋转并保存
+        rotateClockwise();
+        pixmap.save(ImagePath);
+    });
+
     connect(
         this, &Widget::updateSmoothPixmap, this, [=](const QPixmap& smoothPix, qreal scale) {
             if (scale != this->scaleSize) return; //[写在此处而非子线程] 判断更准确(更接近setPixmap)
@@ -244,6 +249,7 @@ void Widget::setPixmap(const QString& path)
         toShow = getScaledPixmap(pixmap, scaleSize, isShadowDrop = (getPixels(fitSize) <= Shadow_P_Limit), Qt::SmoothTransformation);
     }
 
+    ui->btn_rotate->setEnabled(!isGif);
     ui->label_image->setScaledContents(isGif); //效率低//只在Gif时开启
     ui->btn_info->setToolTip(QDir::toNativeSeparators(path) + " [Click to Open]");
 
@@ -296,6 +302,9 @@ void Widget::setCircleMenuActions()
     });
     ui->circleMenu->appendAction("100%", [=]() {
         scaleAndMove(1.0, this->rect().center());
+    });
+    ui->circleMenu->appendAction("旋转90°", [=]() {
+        rotateClockwise();
     });
     ui->circleMenu->appendAction("Quit", [=]() {
         qApp->quit();
@@ -369,6 +378,23 @@ int Widget::switchPixmap(int i)
 int Widget::switchPixmap(Widget::SwitchPix dir)
 {
     return switchPixmap(dir == PRE ? index - 1 : index + 1);
+}
+
+void Widget::rotateClockwise()
+{
+    if (isGif) return;
+
+    QTransform trans = QTransform().rotate(90); //旋转图像
+    pixmap = pixmap.transformed(trans, Qt::SmoothTransformation);
+    toShow = getScaledPixmap(pixmap, scaleSize, isShadowDrop, Qt::SmoothTransformation);
+
+    QSize size = pixRect.size();
+    QPoint center = pixRect.center(); //旋转逻辑框
+    pixRect.setSize(QSize(size.height(), size.width()));
+    pixRect.moveCenter(center);
+
+    updateAll();
+    updateThumbnailPixmap();
 }
 
 void Widget::mousePressEvent(QMouseEvent* event)

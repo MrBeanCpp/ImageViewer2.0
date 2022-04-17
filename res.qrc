@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>images/pin_off.ico</file>
         <file>images/pin_on.ico</file>
+        <file>images/rotate.png</file>
     </qresource>
 </RCC>
