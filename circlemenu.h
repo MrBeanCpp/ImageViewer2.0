@@ -22,8 +22,10 @@ public:
     void setEndPos(const QPoint& pos);
     void release(void);
     QRect getTextRect(const QFont& font, const QString& text);
+    QRect calcItemRect(int i, QPoint center); //正常高中数学二维坐标系（y上正下负）
     void appendAction(const QString& text, std::function<void(void)> func);
-    void calcBtnRects(void);
+    void calcBtnRectsByDegree(void);
+    void calcBtnRectsByHeight(void);
     bool isSelected(void);
     QRect getBoundingRect(void); //废弃 每次move都要运算会增大CPU压力
     void renameAction(const QString& oldName, const QString& newName);
@@ -36,9 +38,10 @@ private:
     int highLight = -1;
     int radius = 75;
     int safeRadius = 25;
+    int limitGap = 25; //btns间最小width间距
     QSize maskSize = { 400, 400 };
     QList<QPair<QString, std::function<void(void)>>> itemList; //"适应屏幕", "退出", "Bomb", "shutdown", "Noooooooo"
-    QList<QRect> btns;
+    QVector<QRect> btns;
     QFont font { "微软雅黑", 9 };
 
     // QWidget interface

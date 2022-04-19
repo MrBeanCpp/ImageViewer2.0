@@ -18,9 +18,10 @@ CircleMenu::CircleMenu(QWidget *parent) :
     radius *= DPIscale;
     safeRadius *= DPIscale;
     maskSize *= DPIscale;
+    limitGap *= DPIscale;
 
-    //appendAction("Text", [=]() { qDebug() << "Test"; });
-    //appendAction("Text2", [=]() { qDebug() << "Test2"; });
+    //    appendAction("Text", [=]() { qDebug() << "Test"; });
+    //    appendAction("Text2", [=]() { qDebug() << "Test2"; });
 }
 
 CircleMenu::~CircleMenu()
@@ -31,7 +32,10 @@ CircleMenu::~CircleMenu()
 void CircleMenu::setStartPos(const QPoint& pos)
 {
     endPos = startPos = pos - this->pos();
-    calcBtnRects(); //重新计算位置
+    if (itemList.size() < 5) //重新计算位置
+        calcBtnRectsByDegree(); //by角度间隔
+    else
+        calcBtnRectsByHeight(); //by高度间隔
 
     QRect Mask(QPoint(), maskSize);
     Mask.moveCenter(startPos);
@@ -63,23 +67,55 @@ QRect CircleMenu::getTextRect(const QFont& font, const QString& text)
     return QFontMetrics(font).boundingRect(text);
 }
 
+QRect CircleMenu::calcItemRect(int i, QPoint center)
+{
+    QRect rect = getTextRect(font, itemList[i].first).marginsAdded(QMargins(8, 5, 8, 5));
+    center.setY(-center.y()); //转换坐标系（原本是高中数学二维坐标轴）
+    rect.moveCenter(center + startPos);
+    return rect;
+}
+
 void CircleMenu::appendAction(const QString& text, std::function<void(void)> func) //添加button
 {
     itemList << qMakePair(text, func); //第一个参数不能直接用"text" 字符串字面量会干扰template判断类型
 }
 
-void CircleMenu::calcBtnRects() //计算按钮位置
+void CircleMenu::calcBtnRectsByDegree() //计算按钮位置
 {
     const int n = itemList.size();
     qreal degree = 90, delta = 360.0 / n;
     btns.clear();
 
     for (int i = 0; i < n; i++, degree += delta) { //获取Btn Rect
-        int x = startPos.x() + qCos(qDegreesToRadians(degree)) * radius;
-        int y = startPos.y() - qSin(qDegreesToRadians(degree)) * radius;
-        QRect rect = getTextRect(font, itemList[i].first).marginsAdded(QMargins(8, 5, 8, 5));
-        rect.moveCenter(QPoint(x, y));
-        btns << rect;
+        int x = qCos(qDegreesToRadians(degree)) * radius;
+        int y = qSin(qDegreesToRadians(degree)) * radius;
+        btns << calcItemRect(i, QPoint(x, y));
+    }
+}
+
+void CircleMenu::calcBtnRectsByHeight()
+{
+    const int n = itemList.size();
+    btns.clear();
+    btns.resize(n); //QList不能用resize，而reserve不会初始化
+
+    btns[0] = calcItemRect(0, QPoint(0, radius)); //top
+
+    const int Level = n / 2;
+    qreal deltaH = (2.0 * radius) / Level; //高度间隔
+    if (n & 1) {
+        assert(limitGap < radius); //计算最底层两个btns的间距来调整高度
+        int limitW = calcItemRect(Level, QPoint()).width() / 2 + calcItemRect(n - Level, QPoint()).width() / 2 + limitGap;
+        deltaH = (sqrt(qPow(radius, 2) - qPow(limitW / 2, 2)) + radius) / Level;
+    }
+
+    for (int i = 1; i <= Level; i++) {
+        qreal h = radius - deltaH * i;
+        qreal w = sqrt(radius * radius - h * h);
+
+        btns[i] = calcItemRect(i, QPoint(-w, h));
+        if (!qFuzzyCompare(w, 0)) //最底层
+            btns[n - i] = calcItemRect(n - i, QPoint(w, h)); //镜像右侧
     }
 }
 
@@ -111,7 +147,7 @@ void CircleMenu::renameAction(const QString& oldName, const QString& newName)
         }
 }
 
-void CircleMenu::paintEvent(QPaintEvent* event)
+void CircleMenu::paintEvent(QPaintEvent* event) //不应该根据相同角度分配Rect 而是要保持间隔高度相等以及两个Rect之间的最小width！！！！！！！圆上的分布问题
 {
     Q_UNUSED(event)
     QPainter painter(this);
