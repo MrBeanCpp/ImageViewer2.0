@@ -102,10 +102,11 @@ void CircleMenu::calcBtnRectsByHeight()
     btns[0] = calcItemRect(0, QPoint(0, radius)); //top
 
     const int Level = n / 2;
-    qreal deltaH = (2.0 * radius) / Level; //高度间隔
+    const qreal D = 2 * radius;
+    qreal deltaH = D / Level; //高度间隔
     if (n & 1) {
-        assert(limitGap < radius); //计算最底层两个btns的间距来调整高度
         int limitW = calcItemRect(Level, QPoint()).width() / 2 + calcItemRect(n - Level, QPoint()).width() / 2 + limitGap;
+        assert(limitW < D); //计算最底层两个btns的间距来调整高度
         deltaH = (sqrt(qPow(radius, 2) - qPow(limitW / 2, 2)) + radius) / Level;
     }
 
