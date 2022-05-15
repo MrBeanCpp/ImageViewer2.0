@@ -106,6 +106,8 @@ Widget::Widget(QWidget* parent)
     });
 
     setPixmap(ImagePath);
+
+    setFocus(); //否则首次按键不响应
 }
 
 Widget::~Widget()
