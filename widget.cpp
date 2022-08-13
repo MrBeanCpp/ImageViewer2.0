@@ -11,12 +11,10 @@
 #include <QtConcurrent>
 #include <QtWinExtras>
 
-QStringList Widget::Filter = { "*.png", "*.jpg", "*.bmp", "*.gif", "*.jpeg" };
+QStringList Widget::Filter = {"*.png", "*.jpg", "*.bmp", "*.gif", "*.jpeg"};
 
 Widget::Widget(QWidget* parent)
-    : QWidget(parent)
-    , ui(new Ui::Widget)
-    , screen(qApp->screens().at(0))
+    : QWidget(parent), ui(new Ui::Widget), screen(qApp->screens().at(0))
 {
     ui->setupUi(this);
     setWindowFlag(Qt::FramelessWindowHint);
@@ -51,7 +49,7 @@ Widget::Widget(QWidget* parent)
     ui->label_version->setGeometry(verRect);
     ui->label_version->hide();
 
-    connect(ui->btn_pin, &QPushButton::clicked, [=](bool checked) { //前置
+    connect(ui->btn_pin, &QPushButton::clicked, this, [=](bool checked) { //前置
         SetWindowPos(HWND(winId()), checked ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
         setIcon(ui->btn_pin, checked ? "pin_on" : "pin_off");
         if (checked)
@@ -60,11 +58,11 @@ Widget::Widget(QWidget* parent)
             ui->circleMenu->renameAction("取消置顶", "Set 置顶");
     });
 
-    connect(ui->btn_info, &QPushButton::clicked, [=]() { //打开文件夹并选中
+    connect(ui->btn_info, &QPushButton::clicked, this, [=]() { //打开文件夹并选中
         ShellExecuteW(NULL, L"open", L"explorer", QString("/select, \"%1\"").arg(QDir::toNativeSeparators(ImagePath)).toStdWString().c_str(), NULL, SW_SHOW);
     });
 
-    connect(ui->btn_rotate, &QPushButton::clicked, [=]() { //旋转并保存
+    connect(ui->btn_rotate, &QPushButton::clicked, this, [=]() { //旋转并保存
         rotateClockwise();
         pixmap.save(ImagePath);
     });
@@ -220,7 +218,7 @@ void Widget::setPixmap(const QString& path)
     QImageReader reader(path);
     if (reader.canRead() == false) {
         QMessageBox::warning(this, "Warning", "Error File Path!\n错误文件路径\n間違えたファイルパス");
-        QTimer::singleShot(0, [=]() { qApp->quit(); }); //需要进入事件循环后触发
+        QTimer::singleShot(0, this, [=]() { qApp->quit(); }); //需要进入事件循环后触发
         return;
     }
     isGif = (QFileInfo(path).suffix().toLower() == "gif"); //or reader.imageCount()>1
@@ -233,7 +231,7 @@ void Widget::setPixmap(const QString& path)
 
     if (!isGif && !qFuzzyCompare(realScale, scaleSize)) //realScale != scaleSize(1.0)意味着图片经过缩放（大于屏幕）
         QtConcurrent::run([=]() { //多线程加载真实大小图片
-            updateRealSizePixmap(QPixmap(path), realScale, path);
+            emit updateRealSizePixmap(QPixmap(path), realScale, path);
         });
 
     QElapsedTimer t;
@@ -332,10 +330,10 @@ void Widget::initThumbnailBar()
         thumbbar->setWindow(windowHandle()); //必须在窗口显示后(构造完成后) or Handle == 0
         thumbbar->setIconicPixmapNotificationsEnabled(true); //进行一些属性设置，否则不能设置缩略图
     }
-    connect(thumbbar, &WinThumbnailToolBar::thumbnailRequested, [=](const QSize& size) {
+    connect(thumbbar, &WinThumbnailToolBar::thumbnailRequested, this, [=](const QSize& size) {
         thumbbar->setThumbnailPixmap(pixmap, size);
     });
-    connect(thumbbar, &WinThumbnailToolBar::iconicLivePreviewPixmapRequested, [=]() {
+    connect(thumbbar, &WinThumbnailToolBar::iconicLivePreviewPixmapRequested, this, [=]() {
         thumbbar->setIconicLivePreviewPixmap(this->grab());
     });
 }
@@ -478,10 +476,10 @@ void Widget::keyReleaseEvent(QKeyEvent* event)
 void Widget::wheelEvent(QWheelEvent* event)
 {
     if (event->modifiers() & Qt::ControlModifier) { //Ctrl+滚轮切换图片
-        switchPixmap(event->delta() > 0 ? PRE : NEXT);
+        switchPixmap(event->angleDelta().y() > 0 ? PRE : NEXT);
     } else {
-        qreal scale = event->delta() > 0 ? scaleSize * 1.1 : scaleSize / 1.1; //观察微软原生Photo得出结论
-        scalePixmap(scale, event->pos());
+        qreal scale = event->angleDelta().y() > 0 ? scaleSize * 1.1 : scaleSize / 1.1; //观察微软原生Photo得出结论
+        scalePixmap(scale, event->globalPosition().toPoint());
     }
 }
 

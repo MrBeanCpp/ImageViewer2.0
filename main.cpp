@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     return a.exec();
 }
 void assocWithExe(QString appPath, QString className, const QStringList& exts, QString extDes)
-{
+{ //效果是再次打开该后缀的文件时，会弹出提示，询问用户要如何打开文件（并提示本程序为新增程序）
     Q_UNUSED(extDes)
     QString baseUrl("HKEY_CURRENT_USER\\Software\\Classes"); // 要添加的顶层目录
     QSettings settingClasses(baseUrl, QSettings::NativeFormat);
