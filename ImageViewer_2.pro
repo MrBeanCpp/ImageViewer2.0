@@ -31,7 +31,7 @@ FORMS += \
     circlemenu.ui \
     widget.ui
 
-LIBS += -lDwmapi -lGdi32 -lShlwapi
+LIBS += -lDwmapi -lGdi32 -lShlwapi -luser32
 
 RC_ICONS = images/ICON.ico
 
@@ -45,3 +45,8 @@ DISTFILES += \
 
 RESOURCES += \
     res.qrc
+
+msvc {
+    QMAKE_CFLAGS += /utf-8
+    QMAKE_CXXFLAGS += /utf-8
+}
