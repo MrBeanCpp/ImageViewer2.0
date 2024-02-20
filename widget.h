@@ -43,6 +43,8 @@ public:
     void updateAll(void);
     qreal scaleToScreen(const QSize& pixSize);
     qreal scaleToScreen(const QPixmap& pixmap);
+    QSize getTransformedSize(const QImageReader& reader);
+    QSize swapSize(const QSize& originalSize);
     QRect getShadowRect(const QRect& rect, int Shadow_R);
     void setCircleMenuActions(void);
     void scaleAndMove(qreal scale, const QPoint& center);
@@ -65,7 +67,7 @@ signals:
 private:
     Ui::Widget* ui;
 
-    const QString Version = "1.3.0";
+    const QString Version = "1.4.0";
 
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;
@@ -78,8 +80,9 @@ private:
     const int Shadow_R = 15;
     const int MenuDelay = 150; //ms
     bool isShadowDrop = true;
-    const QString defaultImage = R"(C:\Users\18134\Pictures\表情包\男子高中生的日常.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
+    const QString defaultImage = R"(E:\Pictures\iPhone 4s\IMG_1313.JPG)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
     //E:\图片(New)\表情包\男子高中生的日常.png//E:\图片(New)\声卡.png
+    //C:\Users\18134\Pictures\表情包\男子高中生的日常.png
     QString ImagePath;
     QScreen* screen;
     WinThumbnailToolBar* thumbbar = nullptr;

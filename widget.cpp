@@ -216,6 +216,7 @@ void Widget::setPixmap(const QString& path)
 {
     ImagePath = path;
     QImageReader reader(path);
+    reader.setAutoTransform(true); //根据图片的EXIF信息自动调整图片的方向，包括旋转和翻转
     if (reader.canRead() == false) {
         QMessageBox::warning(this, "Warning", "Error File Path!\n错误文件路径\n間違えたファイルパス");
         QTimer::singleShot(0, this, [=]() { qApp->quit(); }); //需要进入事件循环后触发
@@ -223,15 +224,20 @@ void Widget::setPixmap(const QString& path)
     }
     isGif = (QFileInfo(path).suffix().toLower() == "gif"); //or reader.imageCount()>1
 
-    QSize realSize = reader.size(); //without Much I/O
+    //reader.size();返回的是原始Size（没有自动应用旋转）
+    QSize realSize = getTransformedSize(reader); //without Much I/O
     qreal realScale = qMin(scaleToScreen(realSize), 1.0); //缩放到能完全显示
     QSize fitSize = realSize * realScale;
-    reader.setScaledSize(fitSize);
+    bool needSwapSize = reader.transformation() & QImageIOHandler::TransformationRotate90;
+    reader.setScaledSize(needSwapSize ? swapSize(fitSize) : fitSize); //Scale应用于自动旋转之前，所以得是原始Size
     scaleSize = 1.0;
 
     if (!isGif && !qFuzzyCompare(realScale, scaleSize)) //realScale != scaleSize(1.0)意味着图片经过缩放（大于屏幕）
         QtConcurrent::run([=]() { //多线程加载真实大小图片
-            emit updateRealSizePixmap(QPixmap(path), realScale, path);
+            QImageReader reader(path);
+            reader.setAutoTransform(true); //自动旋转图片
+            QPixmap realPix = QPixmap::fromImageReader(&reader);
+            emit updateRealSizePixmap(realPix, realScale, path);
         });
 
     QElapsedTimer t;
@@ -284,6 +290,25 @@ qreal Widget::scaleToScreen(const QSize& pixSize)
 qreal Widget::scaleToScreen(const QPixmap& pixmap)
 {
     return scaleToScreen(pixmap.size());
+}
+
+// 获取自动旋转之后的Size
+QSize Widget::getTransformedSize(const QImageReader& reader)
+{
+    QSize originalSize = reader.size(); // 获取原始尺寸 //without Much I/O
+    QImageIOHandler::Transformations transformation = reader.transformation(); // 获取变换信息
+    qDebug() << "Transformation:" << transformation;
+    // 如果图像被旋转了90或270度，宽度和高度会互换
+    if (transformation & QImageIOHandler::TransformationRotate90) {
+        return swapSize(originalSize);
+    }
+
+    return originalSize; // 如果没有旋转，或者旋转了180度，尺寸不变
+}
+
+QSize Widget::swapSize(const QSize& originalSize)
+{
+    return QSize(originalSize.height(), originalSize.width());
 }
 
 QRect Widget::getShadowRect(const QRect& rect, int Shadow_R)
