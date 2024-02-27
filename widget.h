@@ -34,7 +34,8 @@ public:
     bool isInPixelRange(const QSize& size);
     QPixmap getScaledPixmap(const QPixmap& oriPix, qreal scale, bool hasShadow, Qt::TransformationMode transformMode = Qt::FastTransformation);
     void scalePixmap(qreal scale, const QPoint& center = QPoint()); //缩放中心
-    void updateInfo(void);
+    void updateInfo(void); //default info
+    void updateInfo(const QString& str); //custom info
     void adjustBtnPos(void);
     void setIcon(QAbstractButton* btn, const QString& iconName, const QString& suffix = ".ico", const QString& dir = "images"); //default for inner resource
     QPixmap applyEffectToPixmap(const QPixmap& pixmap, QGraphicsEffect* effect, int extent = 0);
@@ -56,6 +57,8 @@ public:
     int switchPixmap(int i); //在文件夹中切换图片(fileList)
     int switchPixmap(SwitchPix dir);
     void rotateClockwise(void);
+    void copyToClipboard(void);
+    void showTip(const QString& tip, int time = 1000);
 
 signals:
     void updateSmoothPixmap(QPixmap smoothPixmap, qreal scale);
@@ -67,7 +70,7 @@ signals:
 private:
     Ui::Widget* ui;
 
-    const QString Version = "1.4.0";
+    const QString Version = "1.4.1";
 
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;

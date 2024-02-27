@@ -268,11 +268,48 @@ QPushButton:pressed{
     <string>TextLabel</string>
    </property>
   </widget>
+  <widget class="QLabel" name="label_tip">
+   <property name="geometry">
+    <rect>
+     <x>390</x>
+     <y>50</y>
+     <width>111</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei UI</family>
+     <pointsize>14</pointsize>
+     <italic>false</italic>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QLabel {
+	font: 700 14pt &quot;Microsoft YaHei UI&quot;;
+    color: white; /* 文字颜色 */
+    background-color: rgb(50, 50, 50); /* 背景颜色，半透明黑色 */
+    border-radius: 5px; /* 边框圆角 */
+    padding: 5px 10px; /* 内边距：上下5px，左右10px */
+}</string>
+   </property>
+   <property name="text">
+    <string>Copied</string>
+   </property>
+   <property name="scaledContents">
+    <bool>false</bool>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
   <zorder>label_image</zorder>
   <zorder>label_info</zorder>
   <zorder>Btns</zorder>
   <zorder>circleMenu</zorder>
   <zorder>label_version</zorder>
+  <zorder>label_tip</zorder>
  </widget>
  <customwidgets>
   <customwidget>

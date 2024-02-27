@@ -37,6 +37,8 @@ Widget::Widget(QWidget* parent)
 
     ui->label_info->move(20, -1);
 
+    ui->label_tip->hide();
+
     ui->label_image->setAttribute(Qt::WA_TransparentForMouseEvents); //鼠标穿透 父窗口处理鼠标事件
 
     ui->btn_info->setFocusProxy(this); //委托焦点，防止点击按钮 label焦点丢失
@@ -166,13 +168,18 @@ void Widget::scalePixmap(qreal scale, const QPoint& center)
 
 void Widget::updateInfo()
 {
-    ui->label_info->setText(QString("  W: %1  H: %2  Pixel: %3  Scale: %4%  |  [  %5  ]  ")
+    updateInfo(QString("  W: %1  H: %2  Pixel: %3  Scale: %4%  |  [  %5  ]  ")
                                 .arg(pixRect.width())
                                 .arg(pixRect.height())
                                 .arg(pixRect.width() * pixRect.height())
                                 .arg(scaleSize * 100, 0, 'f', 0)
                                 .arg(getFileName(ImagePath)));
-    ui->label_info->adjustSize();
+}
+
+void Widget::updateInfo(const QString& str)
+{
+    ui->label_info->setText(str);
+    ui->label_info->adjustSize(); //自适应大小
 }
 
 void Widget::adjustBtnPos()
@@ -422,6 +429,27 @@ void Widget::rotateClockwise()
     updateThumbnailPixmap();
 }
 
+void Widget::copyToClipboard()
+{
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setPixmap(getScaledPixmap(pixmap, scaleSize, false, Qt::SmoothTransformation)); //防止图片过大 同时也可以手动调整大小
+
+    // setImageData可以，setData不可以 可能是缺少什么数据
+    // mimeData->setImageData(this->pixmap);
+    // QApplication::clipboard()->setMimeData(mimeData);
+
+    showTip("Copied to Clipboard");
+}
+
+void Widget::showTip(const QString& tip, int time)
+{
+    ui->label_tip->setText(tip);
+    ui->label_tip->adjustSize();
+    ui->label_tip->move(width()/2 - ui->label_tip->width()/2, 25);
+    ui->label_tip->show();
+    QTimer::singleShot(time, this, [=]() { ui->label_tip->hide(); });
+}
+
 void Widget::mousePressEvent(QMouseEvent* event)
 {
     curPos = event->globalPos();
@@ -492,6 +520,10 @@ void Widget::keyReleaseEvent(QKeyEvent* event)
         break;
     case Qt::Key_Escape:
         qApp->quit();
+        break;
+    case Qt::Key_C: //复制到剪切板
+        if (event->modifiers() & Qt::ControlModifier)
+            copyToClipboard();
         break;
     default:
         break;
