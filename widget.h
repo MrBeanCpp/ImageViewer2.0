@@ -70,7 +70,7 @@ signals:
 private:
     Ui::Widget* ui;
 
-    const QString Version = "1.4.1";
+    const QString Version = "1.4.2";
 
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;
@@ -78,7 +78,7 @@ private:
     QPixmap pixmap; //原始图像
     QPixmap toShow; //缩放的图像(实际显示)
     qreal scaleSize = 1.0; //取名鬼才，很容易让人误以为是size的好吧
-    const QPair<int, int> pixelRange { (int)1e3, (int)1e8 };
+    const QPair<int, int> pixelRange { (int)1e2, (int)1e8 };
     const int Shadow_P_Limit = 1.5e6;
     const int Shadow_R = 15;
     const int MenuDelay = 150; //ms
