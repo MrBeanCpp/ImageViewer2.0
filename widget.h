@@ -52,13 +52,12 @@ public:
     void initThumbnailBar(void);
     void updateThumbnailPixmap(void);
     QStringList getFileList(QString dir, const QStringList& filter);
-    QString getDirPath(const QString& filePath);
-    QString getFileName(const QString& filePath);
     int switchPixmap(int i); //在文件夹中切换图片(fileList)
     int switchPixmap(SwitchPix dir);
     void rotateClockwise(void);
     void copyToClipboard(void);
     void showTip(const QString& tip, int time = 1000);
+    bool isTopMode();
 
 signals:
     void updateSmoothPixmap(QPixmap smoothPixmap, qreal scale);
@@ -70,7 +69,7 @@ signals:
 private:
     Ui::Widget* ui;
 
-    const QString Version = "1.4.2";
+    const QString Version = "1.5.0";
 
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;
@@ -83,8 +82,8 @@ private:
     const int Shadow_R = 15;
     const int MenuDelay = 150; //ms
     bool isShadowDrop = true;
-    const QString defaultImage = R"(E:\Pictures\iPhone 4s\IMG_1313.JPG)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
-    //E:\图片(New)\表情包\男子高中生的日常.png//E:\图片(New)\声卡.png
+    const QString defaultImage = R"(E:\Pictures\表情包\男子高中生的日常.png)"; //"E:\图片(New)\4-4我是大工人.png"//E:\Qt5.14.2\Projects\ImageViewer_2\default.png
+    //E:\图片(New)\表情包\男子高中生的日常.png//E:\图片(New)\声卡.png //E:\Pictures\iPhone 4s\IMG_1313.JPG
     //C:\Users\18134\Pictures\表情包\男子高中生的日常.png
     QString ImagePath;
     QScreen* screen;
@@ -94,6 +93,8 @@ private:
     int index = -1;
     bool isGif = false;
     bool isMenuRequested = false;
+
+    HWND targetWindow = nullptr;
 
 public:
     static QStringList Filter;

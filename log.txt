@@ -93,3 +93,6 @@
         2. PNG透明背景变白（正常）（Windows照片查看器也是如此）
         3. Ctrl+C有时触发失败
         4. QQ有时粘贴时卡住（Win+V打开历史记录的时候）（应该是QQFollower hook的问题）
+
+25.新增相对于某窗口置顶功能（WinEventHook）
+    // 技术简析：https://blog.cls.ink/2024/06/16/Windows%E7%AA%97%E5%8F%A3-%E7%9B%B8%E5%AF%B9%E7%BD%AE%E9%A1%B6-%E6%8A%80%E6%9C%AF%E7%AE%80%E6%9E%90/

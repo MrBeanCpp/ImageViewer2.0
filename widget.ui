@@ -13,6 +13,59 @@
   <property name="windowTitle">
    <string>Widget</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">/* General QMenu Styling */
+QMenu {
+    background-color: #2b2b2b;  /* Menu background color */
+    color: #ffffff;  /* Text color */
+    border: 1px solid black;  /* Border color */
+    padding: 5px;  /* Padding around the menu */
+	border-radius: 10px;
+}
+
+/* QMenu Item Styling */
+QMenu::item {
+    background-color: transparent;  /* Item background color */
+    color: #ffffff;  /* Item text color */
+    padding: 5px 15px 5px 15px;  /* Padding for menu items */
+    border: none;  /* No border for items */
+}
+
+/* QMenu Item Selected Styling */
+QMenu::item:selected {
+    background-color: #3a3a3a;  /* Background color when item is selected */
+    color: #ffffff;  /* Text color when item is selected */
+}
+
+/* Separator Styling */
+QMenu::separator {
+    height: 1px;  /* Separator height */
+    background: #444444;  /* Separator color */
+    margin: 5px 0;  /* Margin around the separator */
+}
+
+/* Styling for QMenu Shortcut */
+QMenu::indicator {
+    padding: 0px;  /* Padding for indicator */
+}
+
+/* Styling for QMenu Arrow */
+QMenu::right-arrow {
+    margin: 5px;  /* Margin around the arrow */
+    image: url(your_arrow_icon.png);  /* Optional: Custom arrow icon */
+}
+
+/* Styling for QMenu Shortcut Text */
+QMenu::item:disabled {
+    color: #7f7f7f;  /* Disabled item text color */
+}
+
+/* Styling for Submenu Indicators */
+QMenu::item:has-children {
+    padding-right: 30px;  /* Extra padding for submenu items */
+}
+</string>
+  </property>
   <widget class="QLabel" name="label_info">
    <property name="geometry">
     <rect>
@@ -131,7 +184,7 @@ QPushButton:pressed{
        </font>
       </property>
       <property name="toolTip">
-       <string>置顶</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;全局置顶&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="styleSheet">
        <string notr="true">QPushButton{
@@ -178,7 +231,7 @@ QPushButton:pressed{
        </font>
       </property>
       <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;旋转&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;旋转并保存&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="styleSheet">
        <string notr="true">QPushButton{

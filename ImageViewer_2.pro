@@ -19,12 +19,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     circlemenu.cpp \
     main.cpp \
+    util.cpp \
     widget.cpp \
+    winEventHook.cpp \
     winthumbnailtoolbar.cpp
 
 HEADERS += \
     circlemenu.h \
+    util.h \
     widget.h \
+    winEventHook.h \
     winthumbnailtoolbar.h
 
 FORMS += \

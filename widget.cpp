@@ -5,11 +5,15 @@
 #include <QMessageBox>
 #include <QMouseEvent>
 //#include <QMutex>
+#include <QMenu>
 #include <QPainter>
 #include <QScreen>
 #include <QTimer>
 #include <QtConcurrent>
 #include <QtWinExtras>
+#include "util.h"
+#include "winEventHook.h"
+
 
 QStringList Widget::Filter = {"*.png", "*.jpg", "*.bmp", "*.gif", "*.jpeg"};
 
@@ -27,7 +31,7 @@ Widget::Widget(QWidget* parent)
     //setWindowState(Qt::WindowMaximized); //对无边框窗口无效
     setFixedSize(screen->geometry().size() - QSize(0, 1)); //留1px 便于触发任务栏（自动隐藏）
 
-    QTimer::singleShot(0, [=]() { initThumbnailBar(); }); //必须在窗口显示后(构造完成后) or Handle == 0
+    QTimer::singleShot(0, this, [=]() { initThumbnailBar(); }); //必须在窗口显示后(构造完成后) or Handle == 0
 
     setCircleMenuActions();
 
@@ -51,13 +55,31 @@ Widget::Widget(QWidget* parent)
     ui->label_version->setGeometry(verRect);
     ui->label_version->hide();
 
-    connect(ui->btn_pin, &QPushButton::clicked, this, [=](bool checked) { //前置
-        SetWindowPos(HWND(winId()), checked ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+    // This may be the result of a user action, click() slot activation, or because setChecked() is called.
+    // 可以被click() & setChecked()激活
+    connect(ui->btn_pin, &QPushButton::toggled, this, [=](bool checked) {
         setIcon(ui->btn_pin, checked ? "pin_on" : "pin_off");
-        if (checked)
+        if (checked) {
+            showTip("Top Mode ON");
             ui->circleMenu->renameAction("Set 置顶", "取消置顶");
-        else
+        }
+        else {
+            showTip("Top Mode OFF");
             ui->circleMenu->renameAction("取消置顶", "Set 置顶");
+        }
+    });
+
+    // 只能被click()激活
+    connect(ui->btn_pin, &QPushButton::clicked, this, [=](bool checked) { //全局置顶
+        Util::setWindowTop(this, checked);
+        if (!checked) {
+            unhookWinEvent();
+            targetWindow = nullptr;
+        }
+    });
+
+    connect(qApp, &QApplication::aboutToQuit, this, []() {
+        unhookWinEvent();
     });
 
     connect(ui->btn_info, &QPushButton::clicked, this, [=]() { //打开文件夹并选中
@@ -101,7 +123,7 @@ Widget::Widget(QWidget* parent)
 
     QtConcurrent::run([=]() { //多线程加载文件夹图片列表
         fileList = getFileList(ImagePath, Filter);
-        index = fileList.indexOf(getFileName(ImagePath));
+        index = fileList.indexOf(Util::getFileName(ImagePath));
         qDebug() << "fileList Loaded"; //100 files 5ms
     });
 
@@ -173,7 +195,7 @@ void Widget::updateInfo()
                                 .arg(pixRect.height())
                                 .arg(pixRect.width() * pixRect.height())
                                 .arg(scaleSize * 100, 0, 'f', 0)
-                                .arg(getFileName(ImagePath)));
+                                .arg(Util::getFileName(ImagePath)));
 }
 
 void Widget::updateInfo(const QString& str)
@@ -335,14 +357,91 @@ void Widget::setCircleMenuActions()
     ui->circleMenu->appendAction("100%", [=]() {
         scaleAndMove(1.0, this->rect().center());
     });
-    ui->circleMenu->appendAction("旋转90°", [=]() {
+    ui->circleMenu->appendAction("旋转90°", [=]() { // 左下角的旋转按钮是"旋转并保存"，右键菜单是"仅旋转"
         rotateClockwise();
     });
     ui->circleMenu->appendAction("Quit", [=]() {
         qApp->quit();
     });
     ui->circleMenu->appendAction("Set 置顶", [=]() {
-        ui->btn_pin->click();
+        if (isTopMode()) {
+            ui->btn_pin->click();
+            return;
+        }
+
+        static QMenu* menu = [this]() -> QMenu* {
+            QMenu* menu = new QMenu(this);
+            // 修复Menu圆角后无法透明的问题
+            menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+            menu->setAttribute(Qt::WA_TranslucentBackground); //背景透明
+
+            QAction *globalTop = new QAction("全局置顶", menu);
+            QAction *relTop = new QAction("相对置顶（to某窗口）", menu);
+
+            connect(globalTop, &QAction::triggered, this, [=]() {
+                ui->btn_pin->click();
+            });
+            connect(relTop, &QAction::triggered, this, [=]() {
+                showTip("Click on a Window to attach.", 2000);
+                ui->btn_pin->setChecked(true);
+                Util::setWindowTop(this, true); // 先置顶一下 防止提示Tip看不到
+
+                setWinEventHook([this](DWORD event, HWND hwnd) {
+                    // 排除自身
+                    if (hwnd == HWND(this->winId())) return;
+
+                    static QPoint lastTargetPos;
+                    if (event == EVENT_SYSTEM_FOREGROUND) {
+                        if (targetWindow == nullptr) {
+                            targetWindow = hwnd;
+                            lastTargetPos = Util::getWindowPos(targetWindow);
+                            showTip(QString("Always on top of %1").arg(Util::getFileDescription(Util::getProcessExePath(hwnd))), 2000);
+                        } else {
+                            // if (hwnd == targetWindow) {
+                            //     // 使用TOPMOST + NOTOPMOST，实现瞬间置顶后取消（不会遮挡其他窗口），假如焦点不变化的情况下，看起来就是全局置顶的
+                            //     // Util::setWindowTop(this, true);
+                            //     // Util::setWindowTop(this, false);
+
+                            //     // 没有焦点的情况下不能TOP，只能TOPMOST（没有输入焦点）
+                            //     SetWindowPos(HWND(this->winId()), HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+                            //     qDebug() << "SetTop";
+                            // }
+
+                            qDebug() << "Foreground window changed."  << Util::getWindowText(hwnd);
+                            Util::setWindowTop(this, hwnd == targetWindow);
+
+                            if (hwnd != targetWindow)
+                                SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                        }
+                    } else if (event == EVENT_SYSTEM_MINIMIZESTART && hwnd == targetWindow) {
+                        this->showMinimized(); // 同步跟随隐藏
+                    } else if (event == EVENT_SYSTEM_MINIMIZEEND && hwnd == targetWindow) {
+                        this->showNormal();
+                    } else if (event == EVENT_OBJECT_DESTROY && hwnd == targetWindow) {
+                        // 取消置顶
+                        if (isTopMode()) {
+                            ui->btn_pin->click();
+                        }
+                    } else if (event == EVENT_OBJECT_LOCATIONCHANGE && hwnd == targetWindow) { // 窗口位置改变
+                        if (!IsIconic(hwnd)) { // 最小化时 位置为(-32000 -32000)，需要过滤
+                            QPoint pos = Util::getWindowPos(hwnd);
+
+                            QPoint offset = pos - lastTargetPos;
+                            pixRect.moveTopLeft(pixRect.topLeft() + offset);
+                            lastTargetPos = pos;
+                            updateAll();
+                        }
+                    }
+                });
+            });
+
+            menu->addAction(globalTop);
+            menu->addAction(relTop);
+
+            return menu;
+        }();
+
+        menu->exec(QCursor::pos());
     });
 }
 
@@ -379,20 +478,10 @@ void Widget::updateThumbnailPixmap()
 QStringList Widget::getFileList(QString dir, const QStringList& filter)
 {
     if (dir.isEmpty()) return QStringList();
-    if (!QFileInfo(dir).isDir()) dir = getDirPath(dir);
+    if (!QFileInfo(dir).isDir()) dir = Util::getDirPath(dir);
     this->curDirPath = dir;
 
     return QDir(dir).entryList(filter, QDir::Files | QDir::NoSymLinks, QDir::LocaleAware);
-}
-
-QString Widget::getDirPath(const QString& filePath)
-{
-    return QFileInfo(filePath).absoluteDir().absolutePath();
-}
-
-QString Widget::getFileName(const QString& filePath)
-{
-    return QFileInfo(filePath).fileName();
 }
 
 int Widget::switchPixmap(int i)
@@ -443,11 +532,18 @@ void Widget::copyToClipboard()
 
 void Widget::showTip(const QString& tip, int time)
 {
+    constexpr int H = 45;
+
     ui->label_tip->setText(tip);
     ui->label_tip->adjustSize();
-    ui->label_tip->move(width()/2 - ui->label_tip->width()/2, 25);
+    ui->label_tip->move(width()/2 - ui->label_tip->width()/2, H);
     ui->label_tip->show();
     QTimer::singleShot(time, this, [=]() { ui->label_tip->hide(); });
+}
+
+bool Widget::isTopMode()
+{
+    return ui->btn_pin->isChecked();
 }
 
 void Widget::mousePressEvent(QMouseEvent* event)
@@ -550,6 +646,9 @@ void Widget::focusInEvent(QFocusEvent* event)
 void Widget::focusOutEvent(QFocusEvent* event)
 {
     Q_UNUSED(event);
+    if (qApp->focusWidget() && qApp->focusWidget()->window() == this)
+        return; // 焦点在子窗口（如QMenu），无需隐藏
+
     ui->label_info->hide();
     ui->Btns->hide();
 }
