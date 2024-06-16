@@ -364,7 +364,7 @@ void Widget::setCircleMenuActions()
         qApp->quit();
     });
     ui->circleMenu->appendAction("Set 置顶", [=]() {
-        if (isTopMode()) {
+        if (isTopMode()) { // 如果已经置顶，就直接取消置顶
             ui->btn_pin->click();
             return;
         }
@@ -530,7 +530,15 @@ void Widget::showTip(const QString& tip, int time)
     ui->label_tip->adjustSize();
     ui->label_tip->move(width()/2 - ui->label_tip->width()/2, H);
     ui->label_tip->show();
-    QTimer::singleShot(time, this, [=]() { ui->label_tip->hide(); });
+
+    // QTimer::singleShot不好重置时间
+    static QTimer* timer = new QTimer(this);
+    timer->setSingleShot(true);
+    timer->setInterval(time);
+    timer->callOnTimeout([=]() { ui->label_tip->hide(); });
+
+    timer->stop(); // 重置时间
+    timer->start();
 }
 
 bool Widget::isTopMode()

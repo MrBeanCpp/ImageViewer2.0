@@ -57,7 +57,7 @@ public:
     void rotateClockwise(void);
     void copyToClipboard(void);
     void showTip(const QString& tip, int time = 1000);
-    bool isTopMode();
+    bool isTopMode(); // 全局置顶或相对置顶
 
 signals:
     void updateSmoothPixmap(QPixmap smoothPixmap, qreal scale);

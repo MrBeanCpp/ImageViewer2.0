@@ -14,7 +14,8 @@ bool Util::setWindowTopMost(QWidget* widget, bool top)
     if (widget == nullptr)
         return false;
 
-    return SetWindowPos(HWND(widget->winId()), top ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+    // SWP_NOACTIVATE 否则会激活FocusIn事件，导致误判
+    return SetWindowPos(HWND(widget->winId()), top ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
 bool Util::setWindowTop(HWND hwnd)
