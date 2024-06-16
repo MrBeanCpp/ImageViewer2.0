@@ -23,6 +23,8 @@ bool setWinEventHook(WinEventCallback callback)
     handlers << SetWinEventHook(EVENT_OBJECT_DESTROY, EVENT_OBJECT_DESTROY, NULL, WinEventProc, 0, 0, WINEVENT_OUTOFCONTEXT);
     handlers << SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE , EVENT_OBJECT_LOCATIONCHANGE , NULL, WinEventProc, 0, 0, WINEVENT_OUTOFCONTEXT);
 
+    qDebug() << "Set WinEventHook.";
+
     return handlers.indexOf(nullptr) == -1; // All not nullptr
 }
 

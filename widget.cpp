@@ -71,7 +71,7 @@ Widget::Widget(QWidget* parent)
 
     // 只能被click()激活
     connect(ui->btn_pin, &QPushButton::clicked, this, [=](bool checked) { //全局置顶
-        Util::setWindowTop(this, checked);
+        Util::setWindowTopMost(this, checked);
         if (!checked) {
             unhookWinEvent();
             targetWindow = nullptr;
@@ -384,52 +384,44 @@ void Widget::setCircleMenuActions()
             connect(relTop, &QAction::triggered, this, [=]() {
                 showTip("Click on a Window to attach.", 2000);
                 ui->btn_pin->setChecked(true);
-                Util::setWindowTop(this, true); // 先置顶一下 防止提示Tip看不到
+                Util::setWindowTopMost(this, true); // 先置顶一下 防止提示Tip看不到
 
                 setWinEventHook([this](DWORD event, HWND hwnd) {
                     // 排除自身
                     if (hwnd == HWND(this->winId())) return;
 
                     static QPoint lastTargetPos;
-                    if (event == EVENT_SYSTEM_FOREGROUND) {
+                    if (event == EVENT_SYSTEM_FOREGROUND) { // 前台窗口变化
                         if (targetWindow == nullptr) {
                             targetWindow = hwnd;
                             lastTargetPos = Util::getWindowPos(targetWindow);
-                            showTip(QString("Always on top of %1").arg(Util::getFileDescription(Util::getProcessExePath(hwnd))), 2000);
+                            showTip(QString("Always on top of %1").arg(Util::getProcessDescription(hwnd)), 2000);
                         } else {
-                            // if (hwnd == targetWindow) {
-                            //     // 使用TOPMOST + NOTOPMOST，实现瞬间置顶后取消（不会遮挡其他窗口），假如焦点不变化的情况下，看起来就是全局置顶的
-                            //     // Util::setWindowTop(this, true);
-                            //     // Util::setWindowTop(this, false);
+                            // qDebug() << "Foreground changed."  << Util::getWindowText(hwnd);
+                            Util::setWindowTopMost(this, hwnd == targetWindow);
 
-                            //     // 没有焦点的情况下不能TOP，只能TOPMOST（没有输入焦点）
-                            //     SetWindowPos(HWND(this->winId()), HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
-                            //     qDebug() << "SetTop";
-                            // }
-
-                            qDebug() << "Foreground window changed."  << Util::getWindowText(hwnd);
-                            Util::setWindowTop(this, hwnd == targetWindow);
-
-                            if (hwnd != targetWindow)
-                                SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                            if (hwnd != targetWindow) // 设置其他窗口为TOP，防止被自身覆盖（层级：NOTOPMOST == TOP）
+                                Util::setWindowTop(hwnd);
                         }
-                    } else if (event == EVENT_SYSTEM_MINIMIZESTART && hwnd == targetWindow) {
-                        this->showMinimized(); // 同步跟随隐藏
-                    } else if (event == EVENT_SYSTEM_MINIMIZEEND && hwnd == targetWindow) {
-                        this->showNormal();
-                    } else if (event == EVENT_OBJECT_DESTROY && hwnd == targetWindow) {
-                        // 取消置顶
-                        if (isTopMode()) {
-                            ui->btn_pin->click();
-                        }
-                    } else if (event == EVENT_OBJECT_LOCATIONCHANGE && hwnd == targetWindow) { // 窗口位置改变
-                        if (!IsIconic(hwnd)) { // 最小化时 位置为(-32000 -32000)，需要过滤
-                            QPoint pos = Util::getWindowPos(hwnd);
+                    } else if (hwnd == targetWindow) { // 目标窗口事件
+                        if (event == EVENT_SYSTEM_MINIMIZESTART) {
+                            this->showMinimized(); // 同步跟随最小化
+                        } else if (event == EVENT_SYSTEM_MINIMIZEEND) {
+                            this->showNormal();
+                        } else if (event == EVENT_OBJECT_DESTROY) { // 窗口关闭
+                            // 取消置顶
+                            if (isTopMode()) {
+                                ui->btn_pin->click();
+                            }
+                        } else if (event == EVENT_OBJECT_LOCATIONCHANGE) { // 窗口位置改变
+                            if (!IsIconic(hwnd)) { // 最小化时 位置为(-32000 -32000)，需要过滤
+                                QPoint pos = Util::getWindowPos(hwnd);
 
-                            QPoint offset = pos - lastTargetPos;
-                            pixRect.moveTopLeft(pixRect.topLeft() + offset);
-                            lastTargetPos = pos;
-                            updateAll();
+                                QPoint offset = pos - lastTargetPos;
+                                pixRect.moveTopLeft(pixRect.topLeft() + offset);
+                                lastTargetPos = pos;
+                                updateAll();
+                            }
                         }
                     }
                 });

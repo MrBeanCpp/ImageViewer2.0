@@ -9,12 +9,17 @@
 #include <comdef.h>
 #include <atlbase.h>
 
-bool Util::setWindowTop(QWidget* widget, bool top)
+bool Util::setWindowTopMost(QWidget* widget, bool top)
 {
     if (widget == nullptr)
         return false;
 
     return SetWindowPos(HWND(widget->winId()), top ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+}
+
+bool Util::setWindowTop(HWND hwnd)
+{
+    return SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 
 QString Util::getDirPath(const QString& filePath)
@@ -87,4 +92,10 @@ QPoint Util::getWindowPos(HWND hwnd)
     RECT currentRect;
     GetWindowRect(hwnd, &currentRect);
     return QPoint(currentRect.left, currentRect.top);
+}
+
+QString Util::getProcessDescription(HWND hwnd)
+{
+    QString exePath = getProcessExePath(hwnd);
+    return getFileDescription(exePath);
 }

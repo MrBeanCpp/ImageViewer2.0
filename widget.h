@@ -94,8 +94,7 @@ private:
     bool isGif = false;
     bool isMenuRequested = false;
 
-    HWND targetWindow = nullptr;
-
+    HWND targetWindow = nullptr; // 相对置顶的目标窗口
 public:
     static QStringList Filter;
 
