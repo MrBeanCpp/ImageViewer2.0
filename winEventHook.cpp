@@ -15,6 +15,11 @@ void CALLBACK WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, 
 
 bool setWinEventHook(WinEventCallback callback)
 {
+    if (!handlers.isEmpty()) {
+        qWarning() << "WinEventHook already set. Unhook first.";
+        return false;
+    }
+
     ::callback = callback;
 
     // WINEVENT_OUTOFCONTEXT：表示回调函数是在调用线程的上下文中调用的，而不是在生成事件的线程的上下文中。这种方式不需要DLL模块句柄（hmodWinEventProc 设置为 NULL）
@@ -35,10 +40,12 @@ void unhookWinEvent()
 
     qDebug() << "Unhook win event.";
 
+    callback = nullptr;
     for (auto& h : handlers) {
         if (h) {
             UnhookWinEvent(h);
             h = nullptr;
         }
     }
+    handlers.clear();
 }

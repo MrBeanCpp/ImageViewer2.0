@@ -56,7 +56,7 @@ public:
     int switchPixmap(SwitchPix dir);
     void rotateClockwise(void);
     void copyToClipboard(void);
-    void showTip(const QString& tip, int time = 1000);
+    void showTip(const QString& tip, int time = 2000);
     bool isTopMode(); // 全局置顶或相对置顶
 
 signals:
@@ -69,7 +69,7 @@ signals:
 private:
     Ui::Widget* ui;
 
-    const QString Version = "1.5.0";
+    const QString Version = "1.5.1";
 
     QRect pixRect { 50, 50, 0, 0 };
     QPoint curPos;

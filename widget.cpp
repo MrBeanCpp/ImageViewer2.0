@@ -41,6 +41,7 @@ Widget::Widget(QWidget* parent)
 
     ui->label_info->move(20, -1);
 
+    ui->label_tip->setGraphicsEffect(createShadowEffect(10));
     ui->label_tip->hide();
 
     ui->label_image->setAttribute(Qt::WA_TransparentForMouseEvents); //鼠标穿透 父窗口处理鼠标事件
@@ -60,11 +61,9 @@ Widget::Widget(QWidget* parent)
     connect(ui->btn_pin, &QPushButton::toggled, this, [=](bool checked) {
         setIcon(ui->btn_pin, checked ? "pin_on" : "pin_off");
         if (checked) {
-            showTip("Top Mode ON");
             ui->circleMenu->renameAction("Set 置顶", "取消置顶");
         }
         else {
-            showTip("Top Mode OFF");
             ui->circleMenu->renameAction("取消置顶", "Set 置顶");
         }
     });
@@ -72,6 +71,7 @@ Widget::Widget(QWidget* parent)
     // 只能被click()激活
     connect(ui->btn_pin, &QPushButton::clicked, this, [=](bool checked) { //全局置顶
         Util::setWindowTopMost(this, checked);
+        showTip(QString("Top Mode %1").arg(checked ? "ON" : "OFF"));
         if (!checked) {
             unhookWinEvent();
             targetWindow = nullptr;
@@ -161,7 +161,7 @@ QPixmap Widget::getScaledPixmap(const QPixmap& oriPix, qreal scale, bool hasShad
 {
     QSize newSize = oriPix.size() * scale; //↓ 1.0优化
     QPixmap resPix = qFuzzyCompare(scale, 1.0) ? oriPix : oriPix.scaled(newSize, Qt::IgnoreAspectRatio, transformMode); //Qt::KeepAspectRatio效率较差
-    if (hasShadow) resPix = applyEffectToPixmap(resPix, createShadowEffect(Shadow_R), Shadow_R);
+    if (hasShadow) resPix = applyEffectToPixmap(resPix, createShadowEffect(Shadow_R), Shadow_R); // 给控件添加QGraphicsDropShadowEffect：在坐标为负时报错，所以先生成阴影pixmap再显示图片
     return resPix;
 }
 
@@ -234,6 +234,7 @@ QPixmap Widget::applyEffectToPixmap(const QPixmap& pixmap, QGraphicsEffect* effe
 
 QGraphicsDropShadowEffect* Widget::createShadowEffect(int radius, const QPoint& offset, const QColor& color)
 {
+    // setGraphicsEffect会 take ownership，所以不需要delete
     QGraphicsDropShadowEffect* effect = new QGraphicsDropShadowEffect(); //不能写parent == this 否则不能多线程//QObject: Cannot create children for a parent that is in a different thread.
     effect->setBlurRadius(radius);
     effect->setColor(color);
@@ -382,7 +383,7 @@ void Widget::setCircleMenuActions()
                 ui->btn_pin->click();
             });
             connect(relTop, &QAction::triggered, this, [=]() {
-                showTip("Click on a Window to attach.", 2000);
+                showTip("Click on a Window to attach.", 10000);
                 ui->btn_pin->setChecked(true);
                 Util::setWindowTopMost(this, true); // 先置顶一下 防止提示Tip看不到
 

@@ -341,10 +341,10 @@ QPushButton:pressed{
    <property name="styleSheet">
     <string notr="true">QLabel {
 	font: 700 14pt &quot;Microsoft YaHei UI&quot;;
-    color: white; /* 文字颜色 */
-    background-color: rgb(50, 50, 50); /* 背景颜色，半透明黑色 */
-    border-radius: 5px; /* 边框圆角 */
-    padding: 5px 10px; /* 内边距：上下5px，左右10px */
+    color: rgb(224, 224, 224); /* 文字颜色 */
+    background-color: rgb(34, 34, 34); /* 背景颜色，半透明黑色 */
+    border-radius: 10px; /* 边框圆角 */
+    padding: 10px 15px; /* 内边距 */
 }</string>
    </property>
    <property name="text">
