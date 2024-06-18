@@ -54,3 +54,15 @@ msvc {
     QMAKE_CFLAGS += /utf-8
     QMAKE_CXXFLAGS += /utf-8
 }
+
+# 会自动在build目录下生成.rc文件并链接
+# 版本
+VERSION = 1.5.1.1
+# 公司名称
+QMAKE_TARGET_COMPANY = "MrBeanC"
+# 文件说明
+QMAKE_TARGET_DESCRIPTION = "ImageViewer 2.0"
+
+
+# 宏定义 for C++ code；这里修改之后需要重新编译 或 修改用到宏的文件以触发重新编译 否则不会生效
+DEFINES += APP_VERSION=\\\"$$VERSION\\\"
