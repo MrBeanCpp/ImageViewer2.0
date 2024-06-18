@@ -49,7 +49,7 @@ Widget::Widget(QWidget* parent)
     ui->btn_info->setFocusProxy(this); //委托焦点，防止点击按钮 label焦点丢失
     ui->btn_pin->setFocusProxy(this);
 
-    ui->label_version->setText(QString("  Version: [%1]  by MrBeanC  ").arg(APP_VERSION));
+    ui->label_version->setText(QString("  Version: [%1]  by MrBeanC  ").arg(qApp->applicationVersion()));
     ui->label_version->adjustSize();
     QRect verRect = ui->label_version->geometry();
     verRect.moveBottomRight(screen->availableGeometry().bottomRight());
