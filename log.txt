@@ -96,3 +96,12 @@
 
 25.新增相对于某窗口置顶功能（WinEventHook）
     // 技术简析：https://blog.cls.ink/2024/06/16/Windows%E7%AA%97%E5%8F%A3-%E7%9B%B8%E5%AF%B9%E7%BD%AE%E9%A1%B6-%E6%8A%80%E6%9C%AF%E7%AE%80%E6%9E%90/
+
+26.文件关联：修改exe文件内容（如描述、图标等）不会刷新Windows缓存，导致不生效，各种清理缓存策略均无效，无奈只能修改exe文件名
+    表现型为：右键png图片-打开方式：显示的是旧的描述信息（ImageViewer_2.exe），但是在资源管理器中显示的是新的（ImageViewer 2.0）
+    到底缓存在哪里呀 aaa
+    !!! 我焯 找到了 ：HKEY_CLASSES_ROOT\Local Settings\Software\Microsoft\Windows\Shell\MuiCache
+    or HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache
+    GPT-4o给力！（虽然问了很多次）
+
+    BUT，QSettings无法处理包含'\'（路径分隔符）的键名，所以只能用 Windows API
