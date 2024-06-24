@@ -103,5 +103,6 @@
     !!! 我焯 找到了 ：HKEY_CLASSES_ROOT\Local Settings\Software\Microsoft\Windows\Shell\MuiCache
     or HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache
     GPT-4o给力！（虽然问了很多次）
+    & https://blog.csdn.net/wsadcg/article/details/116886653
 
     BUT，QSettings无法处理包含'\'（路径分隔符）的键名，所以只能用 Windows API
