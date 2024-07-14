@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <Shlobj.h>
 #include <shlwapi.h>
+#include <QMessageBox>
 void assocWithExe(QString appPath, QString className, const QStringList& exts, QString extDes = QString());
 int main(int argc, char* argv[])
 {
@@ -31,7 +32,7 @@ void registry_delete(HKEY mainPath, const QString& subPath,const QString& key)
 }
 
 // 清除exe描述信息缓存，否则exe信息更新之后，只要文件名（路径）不变，Windows就不会更新它（哼）;
-// WARNING: 如果key是一个路径（包含'\' or '/'），则QSettings无法处理 只能采用 Windows API
+// ATTENTION: 如果key是一个路径（包含'\' or '/'），则QSettings无法处理 只能采用 Windows API
 // `QSettings 始终将反斜杠视为特殊字符，并且不提供用于读取或写入此类条目的 API` - https://runebook.dev/zh/docs/qt/qsettings
 void clearMuiCache(const QString& exePath) //清除mui缓存
 {
@@ -90,6 +91,8 @@ void assocWithExe(QString appPath, QString className, const QStringList& exts, Q
         settingClasses.setValue("/" + ext + "/OpenWithProgIds/" + className, "");
 
     qDebug() << "Registry - 文件关联成功";
+    QMessageBox::information(nullptr, "ASSOC", QString("Registry - 文件关联成功\nfrom:%1\nto:%2").arg(command, appPath));
+
     settingClasses.sync(); // 立即保存该修改
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, 0, 0); //通知系统更新
 }

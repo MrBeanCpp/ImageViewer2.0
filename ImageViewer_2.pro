@@ -59,7 +59,7 @@ TARGET = "ImageViewer 2.0"
 
 # 会自动在build目录下生成.rc文件并链接
 # 版本
-VERSION = 1.5.2
+VERSION = 1.5.3
 # 公司名称
 QMAKE_TARGET_COMPANY = "MrBeanC"
 # 文件说明

@@ -78,14 +78,17 @@ QString Util::getFileDescription(const QString& path)
     if (FAILED(hr))
         throw std::system_error(hr, std::system_category(), "SHCreateItemFromParsingName() failed");
 
+    QString desc = getFileName(path);
     // 使用 CComHeapPtr 自动释放字符串（调用 CoTaskMemFree）
     CComHeapPtr<WCHAR> pValue;
     hr = pItem->GetString(PKEY_FileDescription, &pValue);
-    if (FAILED(hr))
-        throw std::system_error(hr, std::system_category(), "IShellItem2::GetString() failed");
+    if (SUCCEEDED(hr))
+        desc = QString::fromWCharArray(pValue);
+    else
+        qDebug() << "No FileDescription, fallback to file name:" << desc;
 
     CoUninitialize(); // 取消初始化 COM 库
-    return QString::fromWCharArray(pValue);
+    return desc;
 }
 
 QPoint Util::getWindowPos(HWND hwnd)
