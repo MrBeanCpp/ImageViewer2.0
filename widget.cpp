@@ -248,7 +248,7 @@ void Widget::setPixmap(const QString& path)
     QImageReader reader(path);
     reader.setAutoTransform(true); //根据图片的EXIF信息自动调整图片的方向，包括旋转和翻转
     if (reader.canRead() == false) {
-        QMessageBox::warning(this, "Warning", "Error File Path!\n错误文件路径\n間違えたファイルパス");
+        QMessageBox::warning(this, "Warning", "Can not read!\n无法读取文件（路径|格式问题）\nしまった");
         QTimer::singleShot(0, this, [=]() { qApp->quit(); }); //需要进入事件循环后触发
         return;
     }
